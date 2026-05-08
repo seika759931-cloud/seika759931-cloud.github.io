@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta name="google-adsense-account" content="ca-pub-4057438521655639">
+  <meta charset="UTF-8">
+  <title>准看護師試験クイズ</title>
+  <link rel="stylesheet" href="style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+
+<body>
+
+  <div id="home-screen" class="screen active">
+    <h1>准看護師試験</h1>
+    <button id="start-button" onclick="startQuiz()" disabled>スタート</button>
+    <h3>
+      ※スタートボタンの反映にはしばらく時間がかかることがあります。<br>
+      ※本アプリの問題は「医学書院 2026年版 准看護師試験問題集」を参考に作成しています。<br>
+      ※解説画像はAIにより作成したものです。解説画像として適切ではないものは随時確認し、更新予定です。<br>
+      内容に誤りや不明点がある場合は、<a href="mailto:seika759931@outlook.jp">seika759931@outlook.jp</a> までご連絡ください。<br>
+      根拠の文章は学生時代の私が作成したものであり、必ずしも正確であるとは限りません。
+    </h3>
+  </div>
+
+  <div id="category-screen" class="screen">
+    <h2>カテゴリ選択</h2>
+    <button onclick="selectCategory('t1')">人体の仕組みと働き</button>
+    <button onclick="selectCategory('t2')">栄養</button>
+    <button onclick="selectCategory('t3')">薬理</button>
+    <button onclick="selectCategory('t4')">疾病の成り立ち</button>
+    <button onclick="selectCategory('t5')">保健医療福祉の仕組み</button>
+    <button onclick="selectCategory('t6')">看護と法律</button>
+    <button onclick="selectCategory('t7')">基礎看護</button>
+    <button onclick="selectCategory('t8')">成人看護</button>
+    <button onclick="selectCategory('t9')">老年看護</button>
+    <button onclick="selectCategory('t10')">母子看護</button>
+    <button onclick="selectCategory('t11')">精神看護</button>
+    <button onclick="selectCategory('t12')">全ての問題をランダムに出題</button>
+  </div>
+
+  <div id="count-screen" class="screen">
+    <h2>出題数の設定</h2>
+    <div class="input-group">
+      <label for="num-questions">出題数 を入力してください:</label>
+      <input type="number" id="num-questions" min="1" max="50" value="10">
+      <button onclick="startQuizWithCount()">開始</button>
+    </div>
+
+    <div class="category-list-container">
+      <p class="list-title">📚 各カテゴリの最大問題数</p>
+      <div class="category-list">
+        <div class="list-item"><span>人体の仕組みと働き</span><strong>159問</strong></div>
+        <div class="list-item"><span>栄養</span><strong>54問</strong></div>
+        <div class="list-item"><span>薬理</span><strong>71問</strong></div>
+        <div class="list-item"><span>疾病の成り立ち</span><strong>145問</strong></div>
+        <div class="list-item"><span>基礎看護</span><strong>871問</strong></div>
+        <div class="list-item"><span>成人看護</span><strong>704問</strong></div>
+        <div class="list-item"><span>老年看護</span><strong>237問</strong></div>
+        <div class="list-item"><span>母子看護</span><strong>203問</strong></div>
+        <div class="list-item"><span>精神看護</span><strong>204問</strong></div>
+        <div class="list-item total"><span>総数</span><strong>最大 2722問</strong></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="question-screen" class="screen">
+    <div id="question-count" style="font-size:18px; margin-bottom:10px; color: #888;"></div>
+    <p id="question-text" style="font-weight: bold; font-size: 1.2em;"></p>
+    <div id="choices"></div>
+  </div>
+
+  <div id="explanation-screen" class="screen">
+    <h2>解説</h2>
+    <p id="explanation-text" style="white-space: pre-wrap;"></p>
+    <div id="image-container" style="text-align: center; margin: 15px 0;">
+        <img id="explanation-image" src="" alt="解説画像" style="max-width: 100%; border-radius: 8px; display: none;">
+    </div>
+    <button class="next-button" onclick="nextQuestion()">次の問題へ</button>
+  </div>
+
+  <div id="result-screen" class="screen">
+    <h2>結果発表</h2>
+    <p id="result-text" style="font-size: 1.5em; font-weight: bold;"></p>
+    <p id="evaluation-text"></p>
+    <div style="margin-top: 20px;">
+        <a href="history.html" style="display: block; margin-bottom: 10px;">解いた問題の履歴を見る</a>
+        <button onclick="location.reload()">ホームに戻る</button>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

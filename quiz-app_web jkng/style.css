@@ -1,0 +1,96 @@
+/* 基本設定 */
+body {
+    font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    max-width: 600px; /* スマホで見やすい幅に制限 */
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #f0f2f5;
+}
+
+/* 画面の切り替え */
+.screen {
+    display: none;
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.screen.active {
+    display: block;
+}
+
+/* ボタンのデザイン */
+button {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    border: none;
+    border-radius: 8px;
+    background-color: #007bff;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+button:disabled {
+    background-color: #ccc;
+}
+
+button:hover:not(:disabled) {
+    background-color: #0056b3;
+}
+
+/* カテゴリリスト（今回修正した部分） */
+.category-list-container {
+    margin-top: 25px;
+    background: #fdfdfd;
+    padding: 15px;
+    border-radius: 12px;
+    border: 1px solid #eee;
+}
+
+.list-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.list-item span {
+    font-size: 0.95em;
+}
+
+.list-item strong {
+    color: #007bff;
+}
+
+.list-item.total {
+    border-top: 2px solid #007bff;
+    border-bottom: none;
+    font-weight: bold;
+    color: #000;
+}
+
+/* 問題選択肢のボタン */
+.choice-button {
+    background-color: #fff;
+    color: #333;
+    border: 2px solid #007bff;
+    text-align: left;
+}
+
+.choice-button:hover {
+    background-color: #e7f3ff;
+}
+
+/* 解説画像 */
+#explanation-image {
+    border: 1px solid #ddd;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
