@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta name="google-adsense-account" content="ca-pub-4057438521655639">
+  <meta charset="UTF-8">
+  <title>クイズアプリ</title>
+  <link rel="stylesheet" href="style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+
+<body>
+
+  <!-- ホーム画面 -->
+  <div id="home-screen" class="screen active">
+    <h1>看護師国家試験</h1>
+    <button id="start-button" onclick="startQuiz()" disabled>スタート</button>
+    <h3>
+    ※スタートボタンの反映にはしばらく時間がかかることがあります。<br>
+    ※本サイトは東京アカデミー全国公開模試試験2024を使用しています。<br>
+    内容に誤りや不明点がある場合は、<a href="mailto:seika759931@outlook.jp">seika759931@outlook.jp</a> もしくはX・インスタグラムのDMまでご連絡ください。<br>
+    根拠の文章は学生時代の私が作成したものであり、必ずしも正確であるとは限りません。ご了承ください。<br>
+    vr.1.4
+    </h3>
+  </div>
+
+  <!-- カテゴリ選択画面 -->
+  <div id="category-screen" class="screen">
+    <h2>カテゴリ選択</h2>
+    <button onclick="selectCategory('t1')">必修</button>
+    <button onclick="selectCategory('t2')">人体</button>
+    <button onclick="selectCategory('t3')">疾病</button>
+    <button onclick="selectCategory('t4')">社会</button>
+    <button onclick="selectCategory('t5')">基礎</button>
+    <button onclick="selectCategory('t6')">成人</button>
+    <button onclick="selectCategory('t7')">老年</button>
+    <button onclick="selectCategory('t8')">小児</button>
+    <button onclick="selectCategory('t9')">母性</button>
+    <button onclick="selectCategory('t10')">精神</button>
+    <button onclick="selectCategory('t11')">在宅</button>
+    <button onclick="selectCategory('t12')">統合</button>
+    <button onclick="selectCategory('t13')">すべての問題をランダムに出題</button>
+  </div>
+
+  <!-- 出題数入力画面 -->
+  <div id="count-screen" class="screen">
+    <label for="num-questions">出題数:</label>
+    <input type="number" id="num-questions" min="1" max="50">
+    <button onclick="startQuizWithCount()">開始</button>
+
+    <p class="category">必修：最大71問</p>
+    <p class="category">人体：最大12問</p>
+    <p class="category">疾病：最大15問</p>
+    <p class="category">社会：最大14問</p>
+    <p class="category">基礎：最大28問</p>
+    <p class="category">成人：最大39問</p>
+    <p class="category">老年：最大27問</p>
+    <p class="category">小児：最大22問</p>
+    <p class="category">母性：最大22問</p>
+    <p class="category">精神：最大22問</p>
+    <p class="category">在宅：最大20問</p>
+    <p class="category">統合：最大19問</p>
+    <p class="category total">総数：最大311問</p>
+  </div>
+
+  <!-- 問題画面 -->
+  <div id="question-screen" class="screen">
+    <p id="question-count" style="font-size: 24px;"></p>
+    <p id="question-text"></p>
+    <div id="choices"></div>
+  </div>
+
+  <!-- 解説画面 -->
+  <div id="explanation-screen" class="screen">
+    <p id="explanation-text"></p>
+    <button onclick="goNextFromExplanation()">次の問題へ</button>
+  </div>
+
+  <!-- 結果画面 -->
+  <div id="result-screen" class="screen">
+    <p id="result-text"></p>
+    <p id="evaluation-text"></p>
+    <a href="history.html">解いた問題の履歴を見る</a>
+    <button onclick="showScreen('home-screen')">もう一度挑戦</button>
+  </div>
+
+  <!-- ★広告はここに1つだけ置く★ -->
+  <div style="margin-top: 40px;">
+    <!-- AdSense の広告コードをここに貼る -->
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
+  <script src="app.js"></script>
+</body>
+
+</html>
+
+
+
+
+
+
+
