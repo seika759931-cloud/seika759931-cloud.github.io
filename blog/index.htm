@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="google-adsense-account" content="ca-pub-4057438521655639">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-29C5Z0TMBV"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-29C5Z0TMBV');
+    </script>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4057438521655639" crossorigin="anonymous"></script>
+    
+    <title>NEXT Ns, Net ～看護師国家試験・准看護師試験の無料勉強サイト～</title>
+    
+    <style>
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            padding: 0 0 60px 0;
+            line-height: 1.6;
+            color: #222;
+            background-color: #f8f9fa; /* note風の落ち着いた背景色 */
+        }
+        .container {
+            max-width: 660px; /* noteのタイムラインに最適な横幅 */
+            margin: 0 auto;
+            padding: 0 16px;
+        }
+        
+        /* ロゴエリア */
+        .logo-box {
+            background-color: #ffeb3b;
+            padding: 24px 0;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 36px;
+            font-weight: 900;
+            color: #1e88e5;
+            margin: 0;
+            letter-spacing: 1px;
+            text-shadow: 2px 2px 0 rgba(0,0,0,0.1);
+        }
+
+        /* タイムラインの見出し */
+        .timeline-header {
+            border-bottom: 2px solid #e6e6e6;
+            padding-bottom: 10px;
+            margin-bottom: 24px;
+        }
+        .timeline-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #333;
+            display: inline-block;
+            border-bottom: 2px solid #222;
+            margin-bottom: -12px;
+            padding-bottom: 10px;
+        }
+
+        /* ==========================================
+           📌 note風 タイムライン（更新順リスト）
+        ========================================== */
+        .note-timeline {
+            display: flex;
+            flex-direction: column;
+            gap: 0; /* noteは境界線で区切るためギャップは0 */
+        }
+
+        /* 記事一件分のアウター */
+        .note-item {
+            background: #ffffff;
+            border: 1px solid #e6e6e6;
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 16px;
+            display: block;
+            text-decoration: none;
+            color: inherit;
+            transition: background-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .note-item:hover {
+            background-color: #fafafa;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+
+        /* 投稿者情報（ヘッダー部） */
+        .note-author-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            font-size: 13px;
+            color: #666;
+        }
+        .author-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background-color: #1e88e5; /* アイコン未設定時の代替え色 */
+            object-fit: cover;
+        }
+        .author-name {
+            font-weight: 700;
+            color: #333;
+        }
+        .post-badge {
+            font-size: 11px;
+            background: #e2f0fd;
+            color: #1e88e5;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        /* メインレイアウト（文章と画像） */
+        .note-main-body {
+            display: flex;
+            gap: 20px;
+            justify-content: space-between;
+        }
+        .note-text-side {
+            flex: 1;
+        }
+
+        /* 記事タイトル */
+        .note-title {
+            font-size: 18px;
+            font-weight: 700;
+            line-height: 1.4;
+            margin: 0 0 6px 0;
+            color: #222;
+        }
+        .note-item:hover .note-title {
+            text-decoration: underline;
+        }
+
+        /* 記事本文の抜粋 */
+        .note-description {
+            font-size: 14px;
+            color: #555;
+            margin: 0 0 16px 0;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 3; /* 3行で切り取る */
+            overflow: hidden;
+        }
+
+        /* サムネイル画像 */
+        .note-thumbnail {
+            width: 112px;
+            height: 112px;
+            object-fit: cover;
+            border-radius: 4px;
+            border: 1px solid #f0f0f0;
+            flex-shrink: 0;
+        }
+
+        /* フッター部（スキ・カテゴリー） */
+        .note-footer-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            color: #666;
+            margin-top: 8px;
+        }
+        .tag-badge {
+            color: #666;
+            background: #f0f0f0;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+        .like-box {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: #666;
+        }
+        .like-icon {
+            color: #ec4899; /* note風のピンクハート */
+        }
+
+        /* スマホ調整 */
+        @media (max-width: 540px) {
+            .note-item { padding: 16px; }
+            .note-title { font-size: 16px; }
+            .note-thumbnail { width: 80px; height: 80px; }
+            .note-main-body { gap: 12px; }
+        }
+
+        /* 共通フッター */
+        footer {
+            margin-top: 60px;
+            border-top: 1px solid #e6e6e6;
+            padding-top: 24px;
+            font-size: 14px;
+            color: #666;
+        }
+        .social-links {
+            display: flex;
+            gap: 20px;
+            margin-top: 16px;
+        }
+        .social-link {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            color: #333;
+            font-weight: bold;
+        }
+        .social-icon { width: 20px; height: 20px; margin-right: 6px; }
+    </style>
+</head>
+<body>
+
+    <header class="logo-box">
+        <h1 class="logo">NEXT Ns, Net</h1>
+    </header>
+
+    <main class="container">
+        
+        <div class="timeline-header">
+            <div class="timeline-title">最新の記事</div>
+        </div>
+
+        <div class="note-timeline">
+            
+            <!-- 🔄 【ここに最新記事を追加していく】（常に一番上が最新になるように配置します） -->
+
+            <!-- 📄 記事1つ目（最新投稿） -->
+            <a href="解剖/index.htm" class="note-item">
+                <div class="note-author-meta">
+                    <div class="author-icon"></div> <!-- 💡画像があれば <img src="icon.png" class="author-icon"> に -->
+                    <span class="author-name">解剖総論</span>
+                    <span>•</span>
+                    <span>2026/05/18</span> <!-- 💡「2026/05/19」や「3日前」など自由に更新 -->
+                    <span class="post-badge">NEW</span>
+                </div>
+                <div class="note-main-body">
+                    <div class="text-side">
+                        <h2 class="note-title">人体の部位の呼び方、解剖学的用語</h2>
+                        <p class="note-description">人体の部位の呼び方や、基本的な筋肉、臓器などについてザックリとまとめました</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <hr>
+        <div class="section-header topic-blue">
+            <div class="section-title">解剖生理学</div>
+        </div>
+
+        <div class="note-timeline">
+            
+            <!-- 💡 ここには解剖の記事を順番（新しい順）に並べていきます -->
+            <!-- 現在は1記事だけなので、最新記事と同じものをリスト形式で配置しています -->
+            
+            <!-- 📄 解剖記事1つ目 -->
+            <a href="解剖/index.htm" class="note-item">
+                <div class="note-author-meta">
+                    <span class="author-name">解剖総論</span>
+                    <span>•</span>
+                    <span>2026/05/18</span>
+                </div>
+                <h2 class="note-title">人体の部位の呼び方、解剖学的用語</h2>
+                <p class="note-description">人体の部位の呼び方や、基本的な筋肉、臓器などについてザックリとまとめました</p>
+                <span class="tag-badge">#解剖生理学</span>
+            </a>
+
+            <!-- 💡 今後、新しい解剖の記事が増えたら、この下に同じ形のブロックをコピペで増やせます -->
+
+        </div>
+            
+
+        <!-- フッター -->
+        <footer>
+            <p>ご意見ご不明点は、<a href="mailto:seika759931@outlook.jp" style="color: #0563C1;">seika759931@outlook.jp</a> もしくはインスタグラムのDMからお問い合わせください。</p>
+            <div class="social-links">
+                <a href="https://www.instagram.com/seika_next_ns_net" target="_blank" class="social-link">
+                    <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/instagram.svg" alt="Instagram" class="social-icon">
+                    公式Instagram
+                </a>
+                <a href="privacy.html" style="text-decoration: none; color: #666; font-weight: normal;">プライバシーポリシー</a>
+            </div>
+        </footer>
+
+    </main>
+
+</body>
+</html>
