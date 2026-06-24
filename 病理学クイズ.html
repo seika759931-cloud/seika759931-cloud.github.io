@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>病理学 クイズ</title>
+<style>
+  :root {
+    --bg: #f0f4f8;
+    --card: #ffffff;
+    --primary: #2c6fad;
+    --primary-dark: #1a4f80;
+    --accent: #e05577;
+    --correct: #27ae60;
+    --wrong: #e74c3c;
+    --text: #1a2533;
+    --muted: #6b7c93;
+    --border: #d0dce8;
+    --yellow: #fff591;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  /* ===== SCREENS ===== */
+  .screen { display: none; width: 100%; max-width: 700px; }
+  .screen.active { display: flex; flex-direction: column; align-items: center; }
+
+  /* ===== HOME ===== */
+  #home-screen {
+    text-align: center;
+    gap: 28px;
+  }
+  .home-title {
+    font-size: 3.5rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    color: var(--primary);
+    line-height: 1;
+  }
+  .home-subtitle {
+    font-size: 1rem;
+    color: var(--muted);
+    margin-top: -10px;
+  }
+  .home-badge {
+    display: inline-block;
+    background: var(--primary);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    padding: 4px 12px;
+    border-radius: 20px;
+    text-transform: uppercase;
+  }
+
+  /* ===== COUNT SCREEN ===== */
+  #count-screen { gap: 24px; }
+  .count-card {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 36px 40px;
+    box-shadow: 0 4px 20px rgba(44,111,173,0.10);
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .count-card h2 { font-size: 1.4rem; color: var(--primary); }
+  .count-card p { font-size: 0.9rem; color: var(--muted); }
+  .count-input {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 1.3rem;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    outline: none;
+    text-align: center;
+    transition: border-color 0.2s;
+  }
+  .count-input:focus { border-color: var(--primary); }
+  .total-count { color: var(--muted); font-size: 0.85rem; text-align: right; }
+
+  /* ===== QUIZ SCREEN ===== */
+  #quiz-screen { gap: 20px; width: 100%; max-width: 760px; }
+  .progress-bar-wrap {
+    width: 100%;
+    background: var(--border);
+    border-radius: 99px;
+    height: 8px;
+  }
+  .progress-bar-fill {
+    height: 8px;
+    background: linear-gradient(90deg, var(--primary), #5ba4d9);
+    border-radius: 99px;
+    transition: width 0.4s ease;
+  }
+  .progress-label {
+    font-size: 0.8rem;
+    color: var(--muted);
+    width: 100%;
+    text-align: right;
+  }
+  .quiz-card {
+    background: var(--card);
+    border-radius: 18px;
+    padding: 36px 40px;
+    box-shadow: 0 4px 24px rgba(44,111,173,0.10);
+    width: 100%;
+  }
+  .qtype-badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-bottom: 16px;
+    text-transform: uppercase;
+  }
+  .qtype-1 { background: #e8f4fd; color: #2c6fad; }
+  .qtype-2 { background: #edf9f0; color: #27ae60; }
+  .qtype-3 { background: #fef3cd; color: #c07c00; }
+  .qtype-5 { background: #f3e8fd; color: #7b2dad; }
+  .question-text {
+    font-size: 1.15rem;
+    line-height: 1.7;
+    font-weight: 600;
+    margin-bottom: 28px;
+    color: var(--text);
+  }
+
+  /* choices */
+  .choices { display: flex; flex-direction: column; gap: 10px; }
+  .choice-btn {
+    display: block;
+    width: 100%;
+    padding: 14px 20px;
+    background: #f6f9fc;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    font-size: 1rem;
+    font-family: inherit;
+    color: var(--text);
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.15s;
+  }
+  .choice-btn:hover:not(:disabled) {
+    background: #e8f2fc;
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+  .choice-btn.correct { background: #d4f5e2; border-color: var(--correct); color: #1a6e3e; font-weight: 700; }
+  .choice-btn.wrong   { background: #fde8e8; border-color: var(--wrong);   color: #8b1a1a; }
+  .choice-btn:disabled { cursor: default; }
+
+  /* true/false */
+  .tf-row { display: flex; gap: 16px; justify-content: center; margin-top: 8px; }
+  .tf-btn {
+    width: 140px;
+    height: 80px;
+    font-size: 2rem;
+    border: 2px solid var(--border);
+    border-radius: 14px;
+    background: #f6f9fc;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .tf-btn:hover:not(:disabled) { background: #e8f2fc; border-color: var(--primary); }
+  .tf-btn.correct { background: #d4f5e2; border-color: var(--correct); }
+  .tf-btn.wrong   { background: #fde8e8; border-color: var(--wrong); }
+  .tf-btn:disabled { cursor: default; }
+
+  /* fill-in */
+  .fill-row { display: flex; gap: 10px; align-items: center; }
+  .fill-input {
+    flex: 1;
+    padding: 12px 16px;
+    font-size: 1.1rem;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    outline: none;
+    font-family: inherit;
+    transition: border-color 0.2s;
+  }
+  .fill-input:focus { border-color: var(--primary); }
+  .fill-input.correct { border-color: var(--correct); background: #d4f5e2; }
+  .fill-input.wrong   { border-color: var(--wrong);   background: #fde8e8; }
+
+  /* ===== EXPLANATION ===== */
+  .explanation {
+    display: none;
+    margin-top: 20px;
+    padding: 20px 24px;
+    border-radius: 12px;
+    background: var(--yellow);
+    border-left: 5px solid var(--accent);
+    font-size: 0.95rem;
+    line-height: 1.7;
+    white-space: pre-line;
+  }
+  .explanation.visible { display: block; }
+  .result-label {
+    font-size: 1.4rem;
+    font-weight: 800;
+    margin-bottom: 8px;
+  }
+  .result-label.correct { color: var(--correct); }
+  .result-label.wrong   { color: var(--wrong); }
+
+  /* ===== RESULT SCREEN ===== */
+  #result-screen { gap: 24px; text-align: center; }
+  .result-card {
+    background: var(--card);
+    border-radius: 18px;
+    padding: 48px 40px;
+    box-shadow: 0 4px 24px rgba(44,111,173,0.10);
+    width: 100%;
+  }
+  .score-circle {
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), #5ba4d9);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 24px;
+    box-shadow: 0 8px 30px rgba(44,111,173,0.3);
+  }
+  .score-num { font-size: 3rem; font-weight: 900; line-height: 1; }
+  .score-denom { font-size: 1rem; opacity: 0.8; }
+  .hyouka-text { font-size: 1.5rem; font-weight: 700; margin-bottom: 8px; color: var(--primary); }
+  .hyouka-sub  { font-size: 0.9rem; color: var(--muted); }
+
+  /* ===== BUTTONS ===== */
+  .btn-primary {
+    padding: 16px 48px;
+    font-size: 1.15rem;
+    font-weight: 700;
+    font-family: inherit;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    box-shadow: 0 4px 16px rgba(44,111,173,0.25);
+  }
+  .btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-next {
+    margin-top: 20px;
+    padding: 12px 36px;
+    font-size: 1rem;
+    font-weight: 700;
+    font-family: inherit;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s;
+    display: none;
+  }
+  .btn-next.visible { display: inline-block; }
+  .btn-next:hover { background: #c03060; }
+  .btn-submit {
+    padding: 12px 32px;
+    font-size: 1rem;
+    font-weight: 700;
+    font-family: inherit;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s;
+    white-space: nowrap;
+  }
+  .btn-submit:hover { background: var(--primary-dark); }
+  .btn-submit:disabled { background: var(--border); cursor: default; }
+</style>
+</head>
+<body>
+
+<!-- HOME -->
+<div id="home-screen" class="screen active">
+  <span class="home-badge">医療系国試対策</span>
+  <h1 class="home-title">病理学</h1>
+  <p class="home-subtitle">ランダム出題クイズ</p>
+  <button class="btn-primary" onclick="goToCount()">スタート</button>
+</div>
+
+<!-- COUNT -->
+<div id="count-screen" class="screen">
+  <div class="count-card">
+    <h2>問題数を選んでください</h2>
+    <input class="count-input" type="number" id="count-input" min="1" placeholder="例: 10"
+      onkeydown="if(event.key==='Enter') startQuiz()">
+    <p class="total-count" id="total-label"></p>
+    <p>数字を入力してください（英数字は半角で）</p>
+    <button class="btn-primary" onclick="startQuiz()">問題へ</button>
+  </div>
+</div>
+
+<!-- QUIZ -->
+<div id="quiz-screen" class="screen">
+  <div class="progress-bar-wrap">
+    <div class="progress-bar-fill" id="prog-fill" style="width:0%"></div>
+  </div>
+  <div class="progress-label" id="prog-label">0 / 0</div>
+  <div class="quiz-card" id="quiz-card">
+    <span class="qtype-badge" id="qtype-badge"></span>
+    <div class="question-text" id="question-text"></div>
+    <div id="answer-area"></div>
+    <div class="explanation" id="explanation">
+      <div class="result-label" id="result-label"></div>
+      <div id="explanation-text"></div>
+    </div>
+    <div style="text-align:right">
+      <button class="btn-next" id="btn-next" onclick="nextQuestion()">次の問題 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- RESULT -->
+<div id="result-screen" class="screen">
+  <div class="result-card">
+    <div class="score-circle">
+      <div class="score-num" id="score-num">0</div>
+      <div class="score-denom" id="score-denom">/ 0点</div>
+    </div>
+    <div class="hyouka-text" id="hyouka-text"></div>
+    <div class="hyouka-sub" id="hyouka-sub"></div>
+  </div>
+  <button class="btn-primary" onclick="restart()">もう一度挑戦</button>
+</div>
+
+<script>
+// ===================== 問題データ =====================
+const monndai = [
+  ["2","病理学（pathology）の語源において、「病気」を意味する言葉はどれか","Pathos","Logos","Bio","Psycho","正解：Pathos\n（Pathos（病気）＋Logos（真理）が語源となり、「病気のなりたちや仕組みを研究する学問」を指します）\n資料1P参照"],
+  ["2","病理学における「病因論」が研究・対象とするものはどれか","病気の原因や背景因子","病気や症状のおこる筋道（病変形成）","治療薬の体内での代謝速度","生存率の統計的解析","正解：病気の原因や背景因子\n（病気の原因を「病因論」、症状が起こる筋道を「病理発生論」と呼びます）\n資料1P参照"],
+  ["2","資料に挙げられている「細胞損傷の原因」に含まれないものはどれか","正常な加齢（老化）以外のすべての現象","酸素欠乏","免疫反応","遺伝子異常","正解：正常な加齢（老化）以外のすべての現象\n（資料には酸素欠乏、物理・化学・生物学的因子、免疫反応、遺伝子異常、栄養障害、老化の8つが明記されています）\n資料1P参照"],
+  ["2","不対電子をもっている原子あるいは分子を何というか","フリーラジカル","活性酸素種","抗酸化酵素","標的分子","正解：フリーラジカル\n（不対電子を持つものをフリーラジカル、反応性の高い酸素を含む分子を活性酸素種と呼びます）\n資料1P参照"],
+  ["3","病理学の大きな特徴の一つは、病変を視覚的・形態的に捉える「形態学」である。","b1","","","正解：〇\n（資料に「病理学の特徴 ＝ 形態学」と記載されています）\n資料1P参照"],
+  ["3","活性酸素種（ROS）は非常に反応性が低く、細胞内の脂質や核酸、アミノ酸を保護する働きを持つ。","b2","正解：✕\n（活性酸素種は反応性が高く、脂質過酸化、DNA鎖切断、タンパク質変性などの障害を引き起こします）\n資料1P参照"],
+  ["3","スーパーオキシド（O₂・⁻）を過酸化水素（H₂O₂）に変換する抗酸化酵素は、カタラーゼである。","b2","正解：✕\n（スーパーオキシドを過酸化水素にするのは「SOD（スーパーオキシドジスミターゼ）」です）\n資料1P参照"],
+  ["1","病気や症状のおこる筋道のことを、（   ）論（または病変形成）という。","病理発生","正解：病理発生\n（病気の原因である病因論と対になる重要な概念です）\n資料1P参照"],
+  ["1","活性酸素種を消去する「抗酸化酵素」には、SOD、カタラーゼ、および（   ）ペルオキシダーゼがある。","グルタチオン","正解：グルタチオン\n（これらは細胞を酸化ストレスから守る代表的な酵素です）\n資料1P参照"],
+  ["1","フリーラジカルを消去する「非酵素抗酸化物」として、資料に挙げられているのはビタミンA、ビタミンC、ビタミン（   ）などである。","E","正解：E\n（ビタミンA、C、Eは抗酸化作用を持つ主要な栄養素です）\n資料1P参照"],
+  ["2","細胞分裂の回数は有限であるとする、老化のプログラム説における限界の名称はどれか","ヘイフリックの限界","テロメアの限界","エラー蓄積の限界","適応の限界","正解：ヘイフリックの限界\n（細胞分裂数は有限であるという説で、複製ごとにテロメアが短くなることと関連します）\n資料2P参照"],
+  ["2","正常の大きさまで発育した臓器や組織の「容積が減少すること」を何というか","萎縮","低形成","過形成","化生","正解：萎縮\n（正常の大きさまで発育した後に減少するのが萎縮（Atrophy）です）\n資料2P参照"],
+  ["2","発生や成熟の異常によって、そもそも「正常の大きさまで発育しなかった場合」を何というか","低形成","萎縮","過形成","作業性肥大","正解：低形成\n（発育しなかった場合は低形成（hypogenesis）と呼び、萎縮とは明確に区別されます）\n資料2P参照"],
+  ["2","細胞の「数が増加する現象」を何というか","過形成","肥大","萎縮","化生","正解：過形成\n（容積が増えるのが肥大（Hypertrophy）、数が増えるのが過形成（Hyperplasia）です）\n資料2P参照"],
+  ["3","染色体の末端領域にあり、染色体の安定に必須であるが、複製のたびに短くなる部分をテロメアという。","b1","正解：〇\n（テロメアは細胞分裂のたびに短くなり、細胞の老化に関わります）\n資料2P参照"],
+  ["3","長期にわたる傷害刺激から、最終的に細胞が老化するという考え方を「プログラム説」という。","b2","正解：✕\n（傷害刺激の蓄積によるものは「エラー蓄積説」といいます）\n資料2P参照"],
+  ["3","骨折などでギプス固定した後に筋肉が痩せる現象は、萎縮の分類における「圧迫萎縮」にあたる。","b2","正解：✕\n（使わないことによる萎縮は「廃用萎縮（無為萎縮）」に分類されます）\n資料2P参照"],
+  ["1","生体が恒常性を維持するための反応（萎縮・肥大・過形成・化生）を総称して（   ）という。","適応","正解：適応\n（細胞が環境の変化に合わせて変化する現象です）\n資料2P参照"],
+  ["1","細胞の「容積が増加する現象」を（   ）という。","肥大","正解：肥大\n（資料には作業性肥大、代償性肥大、ホルモン性肥大が挙げられています）\n資料2P参照"],
+  ["1","老化に基づく種々の衰えのことを、カタカナで（   ）という。","フレイル","正解：フレイル\n（加齢に伴う形態的・生理機能の低下（frailty）を指します）\n資料2P参照"],
+  ["2","分化成熟した組織が、異なる形態・機能をもつ別の方向に分化した組織に変化する現象を何というか","化生","肥大","萎縮","アポトーシス","正解：化生\n（化生（Metaplasia）の定義そのものであり、刺激に対する適応現象です）\n資料3P参照"],
+  ["2","逆流性食道炎などが原因で、食道の扁平上皮が円柱上皮に変化した状態の粘膜を何というか","バレット粘膜","腸上皮化生","乾酪壊死","肉芽組織","正解：バレット粘膜\n（バレット食道とも呼ばれ、扁平上皮から円柱上皮への変化（円柱上皮化生）の代表例です）\n資料3P参照"],
+  ["2","脳梗塞において、自己融解が高度に生じることで見られる壊死の形式はどれか","融解壊死","凝固壊死","乾酪壊死","アポトーシス","正解：融解壊死\n（液化壊死とも呼ばれ、脳梗塞がその代表例です。心筋梗塞は凝固壊死になります）\n資料4P参照"],
+  ["2","結核結節で見られ、脂肪成分が多いために壊死組織がチーズ様に変化する壊死の形式はどれか","乾酪壊死","凝固壊死","融解壊死","フィブリノイド変性","正解：乾酪壊死\n（結核に特徴的な壊死像であり、マクロの見た目がチーズに似ていることから名付けられています）\n資料4P参照"],
+  ["3","壊死（necrosis）は、細胞の膨潤と溶解を伴い、細胞内成分が外部へ漏出するため強い炎症反応を引き起こす。","b1","","","正解：〇\n（壊死は受動的で広範な領域に及び、強い炎症を伴うのが特徴です。アポトーシスとの対比が最重要です）\n資料3P参照"],
+  ["3","アポトーシス（apoptosis）は、遺伝子やシグナルによって厳密に制御された能動的な細胞死であり、周囲に炎症反応を引き起こさない。","b1","","","正解：〇\n（アポトーシスは個々の細胞死であり、断片化（アポトーシス小体）されて処理されるため炎症を起こしません）\n資料3P参照"],
+  ["3","喫煙や慢性炎症の刺激により、気管支の「線毛円柱上皮」が「重層扁平上皮」に変化することを腸上皮化生という。","b2","","","正解：✕\n（気管支の上皮が扁平上皮になるのは「扁平上皮化生」です。胃粘膜が腸のようになるのが腸上皮化生です）\n資料3P参照"],
+  ["1","アポトーシスにおいて、ヌクレオソーム単位での規則的な断片化が起こることで、ゲル電気泳動などで確認できる特徴的な「はしご状」の像をDNA（   ）という。","ラダー","正解：ラダー\n（DNAラダーはアポトーシスに特徴的な現象として資料に記載されています）\n資料4P参照"],
+  ["1","心筋梗塞などで見られる、細胞質の蛋白質が凝固するタイプの壊死を（   ）壊死という。","凝固","正解：凝固\n（心筋梗塞は凝固壊死の最も代表的な例です）\n資料4P参照"],
+  ["1","胎児の指の形成や、白血球の数、リンパ節の胚中心などで見られる、発生分化の過程でも起こる制御された細胞死は（   ）である。","アポトーシス","正解：アポトーシス\n（組織の形を整えたり、不要な細胞を排除するために能動的に行われます）\n資料4P参照"],
+  ["2","細胞内に脂質が過剰に蓄積する病変（脂肪変性）が最も起こりやすい、代謝の中心となる臓器はどれか","肝臓","心臓","肺","腎臓","正解：肝臓\n（脂肪変性はアルコールや肥満などにより肝細胞に最も多く見られます）\n資料4P参照"],
+  ["2","アルツハイマー病などの脳病変で見られ、異常な蛋白質が組織に沈着する変性の種類はどれか","アミロイド変性","脂肪変性","水腫様変性","硝子滴変性","正解：アミロイド変性\n（アミロイドと呼ばれる線維組織が沈着する変性現象です）\n資料4P参照"],
+  ["2","炎症の5大徴候に含まれないものはどれか","蒼白","発赤（赤くなる）","熱感（熱をもつ）","腫脹（はれる）","正解：蒼白\n（炎症の5大徴候は、発赤・熱感・腫脹・疼痛・機能障害です）\n資料4P参照"],
+  ["2","炎症の経過において、発症から症状が急速に現れ、比較的短期間で終息するものを何というか","急性炎症","慢性炎症","亜急性炎症","肉芽腫性炎症","正解：急性炎症\n（これに対して、数ヶ月〜数年以上続くものを慢性炎症と呼びます）\n資料4P参照"],
+  ["3","痛風（つうふう）は、血液中の尿酸値が高くなり、関節に尿酸塩の結晶が沈着することで激しい痛み（疼痛）を伴う変性・代謝異常の一種である。","b1","正解：〇\n（足の親指の付け根などに激痛を伴う炎症が起こります）\n資料4P参照"],
+  ["3","炎症の5大徴候のうち、痛みのことを専門用語で「腫脹（しゅちょう）」という。","b2","正解：✕\n（痛みは「疼痛（とうつう）」です。腫脹は「はれ」を意味します）\n資料4P参照"],
+  ["3","結核症などで見られる、マクロファージ由来の細胞が集まって結節を作る慢性炎症の特殊な形態を「肉芽腫性炎症」という。","b1","正解：〇\n（特異性炎症とも呼ばれ、結核の診断において極めて重要です）\n資料4P参照"],
+  ["1","細胞が傷害を受けた際、細胞内に水分が過剰に貯留して膨らむ変性を（   ）変性という。","水腫様","正解：水腫様\n（空胞変性とも呼ばれ、細胞の軽い傷害で見られます）\n資料4P参照"],
+  ["1","炎症の5大徴候において、組織がはれ上がる現象のことを（   ）という。","腫脹","正解：腫脹\n（血管透過性が高まり、液体が滲み出ることが原因です）\n資料4P参照"],
+  ["1","炎症が長期間にわたり持続し、組織の破壊と修復（線維化）が同時に進行する状態を（   ）炎症という。","慢性","正解：慢性\n（リンパ球やマクロファージなどの単核球が主に浸潤します）\n資料4P参照"],
+  ["2","損傷された組織が、元の正しい構造と機能を持つ組織に完全に置き換わる修復現象を何というか","再生","瘢痕治癒","化生","過形成","正解：再生\n（完全に元の状態に戻ることを再生、結合組織で埋められることを瘢痕治癒と呼びます）\n資料5P参照"],
+  ["2","組織の欠損部を埋めるために新しく作られる、毛細血管と線維芽細胞に富んだ結合組織を何というか","肉芽組織","肉芽腫","バレット粘膜","壊死組織","正解：肉芽組織\n（創傷治癒の過程で一時的に作られる若い組織です。「肉芽腫」との違いはテスト頻出です）\n資料5P参照"],
+  ["2","急性炎症の局所で最初に、かつ大量に遊出（集結）する主要な白血球の細胞種はどれか","好中球","リンパ球","マクロファージ","好酸球","正解：好中球\n（急性炎症では好中球、慢性炎症ではリンパ球やマクロファージが中心になります）\n資料5P参照"],
+  ["2","傷口の組織修復が終わり、肉芽組織の水分や血管が減少して白く硬い結合組織に変化したものを何というか","瘢痕","肉芽","膿瘍","滲出物","正解：瘢痕\n（いわゆる「きずあと」のことです。線維化が進んだ状態を指します）\n資料5P参照"],
+  ["3","神経細胞（ニューロン）や心筋細胞は、非常に高い「再生能力」を有しており、破壊されても容易に元の細胞に再生する。","b2","正解：✕\n（神経細胞や心筋細胞は再生能力がほとんどない「非分裂細胞（永久細胞）」に分類されます）\n資料5P参照"],
+  ["3","慢性炎症の組織像では、好中球の浸潤よりも、リンパ球や形質細胞、マクロファージの浸潤が目立つのが特徴である。","b1","正解：〇\n（浸潤する細胞の種類による急性・慢性の違いはテストに非常によく出ます）\n資料5P参照"],
+  ["3","肉芽（にくげ）組織と肉芽腫（にくげしゅ）は、言葉は似ているが病理学的には全く異なる病変を指している。","b1","正解：〇\n（肉芽組織は組織修復の正常な過程、肉芽腫は特定の慢性炎症による異常な結節です）\n資料5P参照"],
+  ["1","組織の欠損が大きく再生できない場合、肉芽組織を経て最終的に繊維組織に置き換わる治癒形式を（   ）治癒という。","瘢痕","正解：瘢痕\n（機能の完全な回復は望めず、傷跡が残る治癒です）\n資料5P参照"],
+  ["1","炎症の局所で血管から液体成分や細胞が周囲に染み出る現象を（   ）という。","滲出","正解：滲出\n（これが炎症による腫れ（腫脹）の直接の原因になります）\n資料5P参照"],
+  ["1","急性炎症において、ウミ（膿）を形成するタイプの炎症を（   ）性炎症という。","化膿","正解：化膿\n（好中球の死骸などが膿の主成分となります）\n資料5P参照"],
+  ["2","生まれつき備わっており、異物に対して非特異的（一律）に素早く働く免疫システムを何というか","自然免疫","獲得免疫","細胞性免疫","体液性免疫","正解：自然免疫\n（好中球やマクロファージ、NK細胞などがこれに該当します）\n資料6P参照"],
+  ["2","生後、特定の抗原に接触することで発現し、特異的（個別）かつ強力に排除する免疫システムはどれか","獲得免疫","自然免疫","非特異的免疫","補体系免疫","正解：獲得免疫\n（T細胞やB細胞が主役となり、2回目以降の感染に対して記憶（免疫記憶）を持ちます）\n資料6P参照"],
+  ["2","獲得免疫のうち、B細胞が分化した形質細胞から産生される「抗体」が中心となって働く免疫形式を何というか","体液性免疫","細胞性免疫","自然免疫","貪食作用","正解：体液性免疫\n（抗体（免疫グロブリン）が体液中を巡って異物を攻撃するため、体液性免疫と呼ばれます）\n資料6P参照"],
+  ["2","獲得免疫のうち、キラーT細胞などが直接、感染細胞やがん細胞を攻撃・破壊する免疫形式を何というか","細胞性免疫","体液性免疫","自然免疫","先天免疫","正解：細胞性免疫\n（抗体を介さず、免疫細胞そのものが直接攻撃に赴くシステムです）\n資料6P参照"],
+  ["3","マクロファージや好中球が死んだ細胞や細菌を包み込んで消化・処分する働きを「貪食（どんしょく）作用」という。","b1","正解：〇\n（生体の防御および清掃システムとして重要な働きです）\n資料6P参照"],
+  ["3","自然免疫は、過去に感染した病原体を記憶する「免疫記憶」の能力を持っているため、2回目の感染時にはより早く対応できる。","b2","正解：✕\n（免疫記憶を持つのは「獲得免疫」の特徴です。自然免疫に記憶能力はありません）\n資料6P参照"],
+  ["3","抗体を産生する「形質細胞」は、リンパ球の一種であるB細胞（Bリンパ球）が抗原の刺激を受けて分化したものである。","b1","正解：〇\n（B細胞 → 形質細胞 → 抗体産生、の流れは免疫の基本中の基本です）\n資料6P参照"],
+  ["1","免疫システムにおいて、自分の成分を攻撃せず、外来の異物（非自己）だけを攻撃する識別能力を自己（   ）という。","寛容","正解：寛容\n（自己寛容が破綻すると、自分の体を攻撃してしまう「自己免疫疾患」になります）\n資料6P参照"],
+  ["1","獲得免疫において、一度侵入した病原体の情報を記憶し、再侵入時に迅速に対処できる仕組みを免疫（   ）という。","記憶","正解：記憶\n（この仕組みを利用したのがワクチン（予防接種）です）\n資料6P参照"],
+  ["1","抗体の主成分である、血中の特殊な蛋白質のことを免疫（   ）（略称：Ig）という。","グロブリン","正解：グロブリン\n（IgG、IgM、IgA、IgEなどの種類があります）\n資料6P参照"],
+  ["2","T細胞（Tリンパ球）は骨髄で産生された後、どこの器官で分化・成熟するか","胸腺（Thymus）","骨髄（Bone marrow）","脾臓","リンパ節","正解：胸腺（Thymus）\n（T細胞の『T』は胸腺のThymusの頭文字に由来します）\n資料7P参照"],
+  ["2","B細胞（Bリンパ球）はどこの器官で分化し、液性免疫において中心的な役割を果たすか","骨髄（Bone marrow）","胸腺（Thymus）","扁桃","肝臓","正解：骨髄（Bone marrow）\n（B細胞の『B』は骨髄のBone marrowの頭文字に由来します）\n資料7P参照"],
+  ["2","B細胞が分化・成熟した細胞で、抗体を大量に産生・分泌する細胞を何というか","形質細胞","ヘルパーT細胞","マクロファージ","樹状細胞","正解：形質細胞\n（B細胞は抗原刺激を受けると形質細胞へと分化し、大量の抗体を放出します）\n資料7P参照"],
+  ["2","主要組織適合複合体（MHC / ヒトではHLA）に抗原の断片を結合させてT細胞に提示する、マクロファージや樹状細胞などの総称を何というか","抗原提示細胞","ナチュラルキラー細胞","形質細胞","制御性T細胞","正解：抗原提示細胞\n（外敵の情報をT細胞に教える役割を持つ重要な細胞たちです）\n資料7P参照"],
+  ["3","ヘルパーT細胞（Th）は表面マーカーとしてCD4を持ち、キラーT細胞の関与する免疫反応の促進や、B細胞の分化・成熟を助ける働きがある。","b1","正解：〇\n（資料に記載されているヘルパーT細胞（CD4+）の正しい機能です）\n資料7P参照"],
+  ["3","キラーT細胞（細胞傷害性T細胞）は表面マーカーとしてCD8を持ち、主としてウイルスに感染した細胞を傷害する。","b1","正解：〇\n（ウイルス感染細胞や腫瘍細胞を直接攻撃して破壊する役割を持ちます）\n資料7P参照"],
+  ["3","ナチュラルキラー細胞（NK細胞）は、骨髄で産生されて胸腺で分化し、免疫応答を抑制する機能（Foxp3+）を持っている。","b2","正解：✕\n（免疫応答を抑制する機能を持つのは『制御性T細胞（Treg）』です。ナチュラルキラー細胞はウイルス感染細胞や腫瘍細胞を傷害します）\n資料7P参照"],
+  ["1","T細胞のうち、Foxp3+を特徴とし、免疫応答を抑制する機能を持つ細胞を（   ） T細胞（Treg）という。","制御性","正解：制御性\n（過剰な免疫反応を抑え、アレルギーや自己免疫疾患を防ぐ役割があります）\n資料7P参照"],
+  ["1","抗原提示を受けずに、ウイルス感染細胞や腫瘍細胞を直接傷害する能力を持つリンパ球は（   ）細胞（NK細胞）である。","ナチュラルキラー","正解：ナチュラルキラー\n（資料に明記されているNK細胞の機能です）\n資料7P参照"],
+  ["1","マクロファージや樹状細胞が抗原をT細胞に提示する際、抗原の断片を結合させる分子を主要組織適合複合体（（   ））という。","MHC","正解：MHC\n（ヒトではHLAとも呼ばれる、自己と非自己を識別するための重要な分子です）\n資料7P参照"],
+  ["2","炎症の5大徴候に含まれないものはどれか","蒼白","発赤","熱感","腫脹","正解：蒼白\n（炎症の5大徴候は発赤・熱感・腫脹・疼痛・機能障害です）"],
+  ["2","悪性腫瘍の特徴として、良性腫瘍と比較して正しい記述はどれか","周囲組織への浸潤性がある","増殖速度が緩やかである","転移は全く起こらない","個体に影響を与えない","正解：周囲組織への浸潤性がある\n（悪性は浸潤性に増殖し、周囲を破壊しながら広がります）"],
+  ["1","転移の様式において、リンパ節を介して広がる形式を（   ）性転移という。","リンパ行","正解：リンパ行\n（転移の中で最も頻度が高い形式です）"],
+  ["2","メタボリック症候群の診断基準において、腹囲（ウエストサイズ）の基準は男性で何cm以上か","85cm","90cm","80cm","95cm","正解：85cm\n（女性の場合は90cm以上が基準となります）"],
+  ["3","糖尿病の1型は、主にインスリン抵抗性が主体の疾患である。","b2","正解：✕\n（1型はβ細胞の減少によるインスリン欠乏が主因です）"],
+  ["2","ヒトの体細胞が持つ性染色体の組み合わせは合計何組か","1組","22組","23組","46組","正解：1組\n（22対の常染色体と、1組の性染色体からなります）"],
+  ["3","ミトコンドリア遺伝子は、父親からのみ子に遺伝する（父系遺伝）。","b2","正解：✕\n（ミトコンドリア遺伝子は母親から遺伝する『母系遺伝』です）"],
+  ["2","日本人男性の罹患数において第1位となっている癌はどれか","肺癌","胃癌","前立腺癌","大腸癌","正解：肺癌\n（資料によると男性の罹患数1位は肺癌です）"],
+  ["1","血流が途絶え、心筋が壊死した状態を（   ）という。","心筋梗塞","正解：心筋梗塞\n（冠動脈の閉塞が原因で起こる代表的な循環器疾患です）"],
+  ["2","動脈硬化症（粥状硬化症）の形成過程において、内皮に蓄積する細胞はどれか","マクロファージ","好中球","リンパ球","血小板","正解：マクロファージ\n（脂質を貪食したマクロファージが蓄積します）"],
+  ["3","大動脈解離は、大動脈の内膜が裂ける病態を指す。","b2","正解：✕\n（大動脈の「中膜」が裂ける病態です）"],
+  ["3","深部静脈血栓症（DVT）の血栓が肺動脈に飛ぶと、急性肺塞栓症を引き起こす。","b1","正解：〇\n（その危険性は重篤です）"],
+  ["2","肝細胞癌の主要な原因として最も多いものはどれか","HCV","HBV","アルコール","脂肪肝","正解：HCV\n（肝細胞癌の約80%がHCV感染に関連します）"],
+  ["2","膵頭部癌の最も一般的な臨床症状はどれか","進行性黄疸","腹痛","下痢","糖尿病","正解：進行性黄疸\n（頭部癌による胆道閉塞が原因です）"],
+  ["2","十二指腸潰瘍の原因として最も頻度が高いものはどれか","Helicobacter pylori","アルコール","ストレス","ステロイドホルモン","正解：Helicobacter pylori\n（十二指腸潰瘍の95%はH. pyloriが原因です）"],
+  ["2","大腸癌の進行癌で最も頻度が高い肉眼型はどれか","2型","1型","3型","4型","正解：2型\n（大腸の進行癌の80%は2型です）"],
+  ["2","潰瘍性大腸炎とCrohn病の比較で正しい記述はどれか","Crohn病は全層性の炎症をきたす","Crohn病は直腸から連続性に広がる","潰瘍性大腸炎は回盲部に好発する","潰瘍性大腸炎は非連続性の病変を示す","正解：Crohn病は全層性の炎症をきたす\n（Crohn病の特徴です）"],
+  ["2","肺癌の組織型の中で最も予後が悪く、化学療法が優先されるものはどれか","小細胞癌","腺癌","扁平上皮癌","大細胞癌","正解：小細胞癌\n（早期から全身転移を来すため化学療法が優先されます）"],
+  ["2","子宮頸癌の発生原因として確定しているウイルスはどれか","ヒトパピローマウイルス（HPV）","EBウイルス","サイトメガロウイルス","ヘルペスウイルス","正解：ヒトパピローマウイルス（HPV）"],
+  ["2","口腔癌の約90%を占める組織型はどれか","扁平上皮癌","腺癌","悪性リンパ腫","肉腫","正解：扁平上皮癌\n（口腔癌の90%は扁平上皮癌です）"],
+  ["2","乳癌の治療において、HER2をターゲットにした分子標的薬はどれか","ハーセプチン","タモキシフェン","アロマターゼ阻害薬","パクリタキセル","正解：ハーセプチン\n（HER2をターゲットにした分子標的薬です）"],
+  ["2","MHCクラスI分子に結合した抗原断片を認識して活性化するT細胞の分画はどれか","CD8+キラーT細胞","CD4+ヘルパーT細胞","制御性T細胞（Treg）","B細胞","正解：CD8+キラーT細胞\n（クラスI分子とCD8+T細胞が結合・認識します）\n資料11P参照"],
+  ["2","MHCクラスII分子に結合した抗原断片を認識して活性化するT細胞の分画はどれか","CD4+ヘルパーT細胞","CD8+キラーT細胞","ナチュラルキラー細胞","形質細胞","正解：CD4+ヘルパーT細胞\n（クラスII分子とCD4+T細胞が結合・認識します）\n資料11P参照"],
+  ["3","ヒトの主要組織適合遺伝子複合体（MHC）は、HLAと呼ばれる。","b1","正解：〇\n（ヒトにおけるMHCはHLA（ヒト組織適合性白血球抗原）と呼ばれます）\n資料11P参照"],
+  ["2","肺癌の組織型において、日本で最も頻度が高いのはどれか","腺癌","扁平上皮癌","小細胞癌","大細胞癌","正解：腺癌\n（日本では腺癌が最も多い）\n資料参照"],
+  ["2","気管支喘息の痰中にみられる好酸球の崩壊産物はどれか","Charcot-Leyden結晶","シュウ酸カルシウム結晶","尿酸結晶","アミロイド小体","正解：Charcot-Leyden結晶"],
+  ["2","結核結節において特徴的にみられる、中心部の壊死を何というか","乾酪壊死","凝固壊死","液化壊死","壊疽","正解：乾酪壊死"],
+  ["2","悪性中皮腫の主な原因として知られるものはどれか","アスベスト（石綿）","喫煙","飲酒","EBウイルス感染","正解：アスベスト（石綿）\n（胸膜に生じる腫瘍の主要な原因です）"],
+  ["5","大腸癌は門脈を経由するため肝転移を生じやすい","真","偽","正解：真\n（大腸からの静脈血は門脈へ流入するため血行性転移として肝転移が多発します）"],
+  ["5","食道静脈瘤の破裂は、吐血やタール便の原因となる","真","偽","正解：真\n（肝硬変による門脈圧亢進症の重篤な合併症です）"],
+  ["5","黄疸の分類において、溶血性黄疸で上昇するのは間接型ビリルビンである","真","偽","正解：真\n（赤血球の破壊により間接型ビリルビンが過剰産生されます）"],
+];
+
+// ===================== アプリ状態 =====================
+let questions = [];
+let currentIdx = 0;
+let score = 0;
+let total = 0;
+let answered = false;
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function goToCount() {
+  document.getElementById('total-label').textContent = `全 ${monndai.length} 問から出題`;
+  showScreen('count-screen');
+  document.getElementById('count-input').focus();
+}
+
+function startQuiz() {
+  const val = parseInt(document.getElementById('count-input').value);
+  if (!val || val < 1) {
+    alert('1以上の数字を入力してください。');
+    return;
+  }
+  total = Math.min(val, monndai.length);
+  score = 0;
+  currentIdx = 0;
+  answered = false;
+  questions = shuffle([...monndai]).slice(0, total);
+  showScreen('quiz-screen');
+  renderQuestion();
+}
+
+function renderQuestion() {
+  answered = false;
+  const q = questions[currentIdx];
+  const type = q[0];
+
+  // progress
+  const pct = (currentIdx / total) * 100;
+  document.getElementById('prog-fill').style.width = pct + '%';
+  document.getElementById('prog-label').textContent = `${currentIdx + 1} / ${total}`;
+
+  // badge
+  const badge = document.getElementById('qtype-badge');
+  const typeMap = {'1':'穴埋め問題','2':'4択問題','3':'〇✕問題','5':'2択問題'};
+  badge.textContent = typeMap[type] || '問題';
+  badge.className = `qtype-badge qtype-${type}`;
+
+  // question
+  document.getElementById('question-text').textContent = `第${currentIdx+1}問　${q[1]}`;
+
+  // hide explanation
+  const expEl = document.getElementById('explanation');
+  expEl.classList.remove('visible');
+  document.getElementById('btn-next').classList.remove('visible');
+
+  const area = document.getElementById('answer-area');
+  area.innerHTML = '';
+
+  if (type === '2') {
+    // 4択
+    const choices = shuffle([q[2], q[3], q[4], q[5]]);
+    const div = document.createElement('div');
+    div.className = 'choices';
+    choices.forEach(c => {
+      const btn = document.createElement('button');
+      btn.className = 'choice-btn';
+      btn.textContent = c;
+      btn.onclick = () => judgeType2(btn, c, q[2], q, div);
+      div.appendChild(btn);
+    });
+    area.appendChild(div);
+  } else if (type === '3') {
+    // 〇✕
+    const correctBtn = q[2]; // "b1"=〇 "b2"=✕
+    const row = document.createElement('div');
+    row.className = 'tf-row';
+    const maru = document.createElement('button');
+    maru.className = 'tf-btn'; maru.textContent = '〇';
+    maru.onclick = () => judgeType3(maru, 'b1', correctBtn, q, row);
+    const batsu = document.createElement('button');
+    batsu.className = 'tf-btn'; batsu.textContent = '✕';
+    batsu.onclick = () => judgeType3(batsu, 'b2', correctBtn, q, row);
+    row.appendChild(maru); row.appendChild(batsu);
+    area.appendChild(row);
+  } else if (type === '1') {
+    // 穴埋め
+    const row = document.createElement('div');
+    row.className = 'fill-row';
+    const input = document.createElement('input');
+    input.className = 'fill-input'; input.type = 'text';
+    input.placeholder = '回答を入力…';
+    input.onkeydown = (e) => { if (e.key === 'Enter') judgeType1(input, q); };
+    const btn = document.createElement('button');
+    btn.className = 'btn-submit'; btn.textContent = '回答する';
+    btn.onclick = () => judgeType1(input, q);
+    row.appendChild(input); row.appendChild(btn);
+    area.appendChild(row);
+    setTimeout(() => input.focus(), 50);
+  } else if (type === '5') {
+    // 2択
+    const choices = shuffle([
+      {label: q[2], val: '2'},
+      {label: q[3], val: '3'}
+    ]);
+    const div = document.createElement('div');
+    div.className = 'choices';
+    choices.forEach(c => {
+      const btn = document.createElement('button');
+      btn.className = 'choice-btn';
+      btn.textContent = c.label;
+      btn.onclick = () => judgeType5(btn, c.val, q, div);
+      div.appendChild(btn);
+    });
+    area.appendChild(div);
+  }
+}
+
+function showExplanation(isCorrect, explanationText) {
+  answered = true;
+  const expEl = document.getElementById('explanation');
+  const lbl = document.getElementById('result-label');
+  lbl.textContent = isCorrect ? '正解！🎉' : '不正解…';
+  lbl.className = 'result-label ' + (isCorrect ? 'correct' : 'wrong');
+  document.getElementById('explanation-text').textContent = explanationText;
+  expEl.classList.add('visible');
+  document.getElementById('btn-next').classList.add('visible');
+  expEl.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+function judgeType2(clickedBtn, selected, correct, q, container) {
+  if (answered) return;
+  const isCorrect = selected === correct;
+  if (isCorrect) score++;
+  container.querySelectorAll('.choice-btn').forEach(b => {
+    b.disabled = true;
+    if (b.textContent === correct) b.classList.add('correct');
+    else if (b === clickedBtn && !isCorrect) b.classList.add('wrong');
+  });
+  showExplanation(isCorrect, q[6]);
+}
+
+function judgeType3(clickedBtn, selected, correct, q, container) {
+  if (answered) return;
+  const isCorrect = selected === correct;
+  if (isCorrect) score++;
+  // find explanation: it can be at index 3 or 5 depending on data format
+  const expl = q[3] || q[5] || '';
+  container.querySelectorAll('.tf-btn').forEach(b => {
+    b.disabled = true;
+    const isCircle = b.textContent === '〇';
+    const btnKey = isCircle ? 'b1' : 'b2';
+    if (btnKey === correct) b.classList.add('correct');
+    else if (b === clickedBtn && !isCorrect) b.classList.add('wrong');
+  });
+  showExplanation(isCorrect, expl);
+}
+
+function judgeType1(input, q) {
+  if (answered) return;
+  const userAns = input.value.trim();
+  if (!userAns) return;
+  // Use flexible matching (normalize)
+  const normalize = s => s.replace(/\s/g,'').toLowerCase();
+  const isCorrect = normalize(userAns) === normalize(q[2]);
+  if (isCorrect) score++;
+  input.disabled = true;
+  input.classList.add(isCorrect ? 'correct' : 'wrong');
+  input.nextElementSibling.disabled = true;
+  showExplanation(isCorrect, q[3]);
+}
+
+function judgeType5(clickedBtn, selected, q, container) {
+  if (answered) return;
+  const isCorrect = selected === '2'; // index 2 is correct choice
+  if (isCorrect) score++;
+  container.querySelectorAll('.choice-btn').forEach(b => {
+    b.disabled = true;
+    if (b.textContent === q[2]) b.classList.add('correct');
+    else if (b === clickedBtn && !isCorrect) b.classList.add('wrong');
+  });
+  showExplanation(isCorrect, q[4]);
+}
+
+function nextQuestion() {
+  currentIdx++;
+  if (currentIdx >= total) {
+    showResult();
+  } else {
+    renderQuestion();
+    document.getElementById('quiz-card').scrollIntoView({behavior:'smooth', block:'start'});
+  }
+}
+
+function showResult() {
+  const pct = Math.round((score / total) * 100);
+  document.getElementById('score-num').textContent = pct;
+  document.getElementById('score-denom').textContent = `/ 100点`;
+  document.getElementById('prog-fill').style.width = '100%';
+
+  let hyouka, sub;
+  if (pct === 100) { hyouka = '満点合格おめでとう！！🎊'; sub = '完璧です！素晴らしい！'; }
+  else if (pct >= 80) { hyouka = 'おしい！あと少しで満点！'; sub = `正解数: ${score} / ${total}`; }
+  else if (pct >= 60) { hyouka = '合格おめでとう！！'; sub = `正解数: ${score} / ${total}`; }
+  else if (pct >= 50) { hyouka = '惜しい！もう少しで合格！'; sub = 'もう一回チャレンジしてね！'; }
+  else if (pct <= 10) { hyouka = '本当に勉強してる!？😅'; sub = '頑張れ！'; }
+  else { hyouka = '勉強してからもう一度！'; sub = `正解数: ${score} / ${total}`; }
+
+  document.getElementById('hyouka-text').textContent = hyouka;
+  document.getElementById('hyouka-sub').textContent = sub;
+  showScreen('result-screen');
+}
+
+function restart() {
+  document.getElementById('count-input').value = '';
+  showScreen('count-screen');
+  document.getElementById('count-input').focus();
+}
+</script>
+</body>
+</html>
