@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>生化学 クイズ</title>
+<style>
+  :root {
+    --bg: #f0f4f8;
+    --card: #ffffff;
+    --primary: #2c6fad;
+    --primary-dark: #1a4f80;
+    --accent: #e05577;
+    --correct: #27ae60;
+    --wrong: #e74c3c;
+    --text: #1a2533;
+    --muted: #6b7c93;
+    --border: #d0dce8;
+    --yellow: #fff591;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  /* ===== SCREENS ===== */
+  .screen { display: none; width: 100%; max-width: 700px; }
+  .screen.active { display: flex; flex-direction: column; align-items: center; }
+
+  /* ===== HOME ===== */
+  #home-screen {
+    text-align: center;
+    gap: 28px;
+  }
+  .home-title {
+    font-size: 3.5rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    color: var(--primary);
+    line-height: 1;
+  }
+  .home-subtitle {
+    font-size: 1rem;
+    color: var(--muted);
+    margin-top: -10px;
+  }
+  .home-badge {
+    display: inline-block;
+    background: var(--primary);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    padding: 4px 12px;
+    border-radius: 20px;
+    text-transform: uppercase;
+  }
+
+  /* ===== COUNT SCREEN ===== */
+  #count-screen { gap: 24px; }
+  .count-card {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 36px 40px;
+    box-shadow: 0 4px 20px rgba(44,111,173,0.10);
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .count-card h2 { font-size: 1.4rem; color: var(--primary); }
+  .count-card p { font-size: 0.9rem; color: var(--muted); }
+  .count-input {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 1.3rem;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    outline: none;
+    text-align: center;
+    transition: border-color 0.2s;
+  }
+  .count-input:focus { border-color: var(--primary); }
+  .total-count { color: var(--muted); font-size: 0.85rem; text-align: right; }
+
+  /* ===== QUIZ SCREEN ===== */
+  #quiz-screen { gap: 20px; width: 100%; max-width: 760px; }
+  .progress-bar-wrap {
+    width: 100%;
+    background: var(--border);
+    border-radius: 99px;
+    height: 8px;
+  }
+  .progress-bar-fill {
+    height: 8px;
+    background: linear-gradient(90deg, var(--primary), #5ba4d9);
+    border-radius: 99px;
+    transition: width 0.4s ease;
+  }
+  .progress-label {
+    font-size: 0.8rem;
+    color: var(--muted);
+    width: 100%;
+    text-align: right;
+  }
+  .quiz-card {
+    background: var(--card);
+    border-radius: 18px;
+    padding: 36px 40px;
+    box-shadow: 0 4px 24px rgba(44,111,173,0.10);
+    width: 100%;
+  }
+  .qtype-badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-bottom: 16px;
+    text-transform: uppercase;
+  }
+  .qtype-1 { background: #e8f4fd; color: #2c6fad; }
+  .qtype-2 { background: #edf9f0; color: #27ae60; }
+  .qtype-3 { background: #fef3cd; color: #c07c00; }
+  .qtype-5 { background: #f3e8fd; color: #7b2dad; }
+  .question-text {
+    font-size: 1.15rem;
+    line-height: 1.7;
+    font-weight: 600;
+    margin-bottom: 28px;
+    color: var(--text);
+  }
+
+  /* choices */
+  .choices { display: flex; flex-direction: column; gap: 10px; }
+  .choice-btn {
+    display: block;
+    width: 100%;
+    padding: 14px 20px;
+    background: #f6f9fc;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    font-size: 1rem;
+    font-family: inherit;
+    color: var(--text);
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.15s;
+  }
+  .choice-btn:hover:not(:disabled) {
+    background: #e8f2fc;
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+  .choice-btn.correct { background: #d4f5e2; border-color: var(--correct); color: #1a6e3e; font-weight: 700; }
+  .choice-btn.wrong   { background: #fde8e8; border-color: var(--wrong);   color: #8b1a1a; }
+  .choice-btn:disabled { cursor: default; }
+
+  /* true/false */
+  .tf-row { display: flex; gap: 16px; justify-content: center; margin-top: 8px; }
+  .tf-btn {
+    width: 140px;
+    height: 80px;
+    font-size: 2rem;
+    border: 2px solid var(--border);
+    border-radius: 14px;
+    background: #f6f9fc;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .tf-btn:hover:not(:disabled) { background: #e8f2fc; border-color: var(--primary); }
+  .tf-btn.correct { background: #d4f5e2; border-color: var(--correct); }
+  .tf-btn.wrong   { background: #fde8e8; border-color: var(--wrong); }
+  .tf-btn:disabled { cursor: default; }
+
+  /* fill-in */
+  .fill-row { display: flex; gap: 10px; align-items: center; }
+  .fill-input {
+    flex: 1;
+    padding: 12px 16px;
+    font-size: 1.1rem;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    outline: none;
+    font-family: inherit;
+    transition: border-color 0.2s;
+  }
+  .fill-input:focus { border-color: var(--primary); }
+  .fill-input.correct { border-color: var(--correct); background: #d4f5e2; }
+  .fill-input.wrong   { border-color: var(--wrong);   background: #fde8e8; }
+
+  /* ===== EXPLANATION ===== */
+  .explanation {
+    display: none;
+    margin-top: 20px;
+    padding: 20px 24px;
+    border-radius: 12px;
+    background: var(--yellow);
+    border-left: 5px solid var(--accent);
+    font-size: 0.95rem;
+    line-height: 1.7;
+    white-space: pre-line;
+  }
+  .explanation.visible { display: block; }
+  .result-label {
+    font-size: 1.4rem;
+    font-weight: 800;
+    margin-bottom: 8px;
+  }
+  .result-label.correct { color: var(--correct); }
+  .result-label.wrong   { color: var(--wrong); }
+
+  /* ===== RESULT SCREEN ===== */
+  #result-screen { gap: 24px; text-align: center; }
+  .result-card {
+    background: var(--card);
+    border-radius: 18px;
+    padding: 48px 40px;
+    box-shadow: 0 4px 24px rgba(44,111,173,0.10);
+    width: 100%;
+  }
+  .score-circle {
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), #5ba4d9);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 24px;
+    box-shadow: 0 8px 30px rgba(44,111,173,0.3);
+  }
+  .score-num { font-size: 3rem; font-weight: 900; line-height: 1; }
+  .score-denom { font-size: 1rem; opacity: 0.8; }
+  .hyouka-text { font-size: 1.5rem; font-weight: 700; margin-bottom: 8px; color: var(--primary); }
+  .hyouka-sub  { font-size: 0.9rem; color: var(--muted); }
+
+  /* ===== BUTTONS ===== */
+  .btn-primary {
+    padding: 16px 48px;
+    font-size: 1.15rem;
+    font-weight: 700;
+    font-family: inherit;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    box-shadow: 0 4px 16px rgba(44,111,173,0.25);
+  }
+  .btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-next {
+    margin-top: 20px;
+    padding: 12px 36px;
+    font-size: 1rem;
+    font-weight: 700;
+    font-family: inherit;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s;
+    display: none;
+  }
+  .btn-next.visible { display: inline-block; }
+  .btn-next:hover { background: #c03060; }
+  .btn-submit {
+    padding: 12px 32px;
+    font-size: 1rem;
+    font-weight: 700;
+    font-family: inherit;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s;
+    white-space: nowrap;
+  }
+  .btn-submit:hover { background: var(--primary-dark); }
+  .btn-submit:disabled { background: var(--border); cursor: default; }
+</style>
+</head>
+<body>
+
+<!-- HOME -->
+<div id="home-screen" class="screen active">
+  <span class="home-badge">医療系国試対策</span>
+  <h1 class="home-title">生化学</h1>
+  <p class="home-subtitle">ランダム出題クイズ</p>
+  <button class="btn-primary" onclick="goToCount()">スタート</button>
+</div>
+
+<!-- COUNT -->
+<div id="count-screen" class="screen">
+  <div class="count-card">
+    <h2>問題数を選んでください</h2>
+    <input class="count-input" type="number" id="count-input" min="1" placeholder="例: 10"
+      onkeydown="if(event.key==='Enter') startQuiz()">
+    <p class="total-count" id="total-label"></p>
+    <p>数字を入力してください（英数字は半角で）</p>
+    <button class="btn-primary" onclick="startQuiz()">問題へ</button>
+  </div>
+</div>
+
+<!-- QUIZ -->
+<div id="quiz-screen" class="screen">
+  <div class="progress-bar-wrap">
+    <div class="progress-bar-fill" id="prog-fill" style="width:0%"></div>
+  </div>
+  <div class="progress-label" id="prog-label">0 / 0</div>
+  <div class="quiz-card" id="quiz-card">
+    <span class="qtype-badge" id="qtype-badge"></span>
+    <div class="question-text" id="question-text"></div>
+    <div id="answer-area"></div>
+    <div class="explanation" id="explanation">
+      <div class="result-label" id="result-label"></div>
+      <div id="explanation-text"></div>
+    </div>
+    <div style="text-align:right">
+      <button class="btn-next" id="btn-next" onclick="nextQuestion()">次の問題 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- RESULT -->
+<div id="result-screen" class="screen">
+  <div class="result-card">
+    <div class="score-circle">
+      <div class="score-num" id="score-num">0</div>
+      <div class="score-denom" id="score-denom">/ 0点</div>
+    </div>
+    <div class="hyouka-text" id="hyouka-text"></div>
+    <div class="hyouka-sub" id="hyouka-sub"></div>
+  </div>
+  <button class="btn-primary" onclick="restart()">もう一度挑戦</button>
+</div>
+
+<script>
+// ===================== 問題データ =====================
+const monndai = [
+   ["1","原核生物は大腸菌や乳酸菌などの（　　　　）と好熱菌や好塩菌などの古細菌に分けられる","真生細菌","正解：真生細菌\nサイト参照"],
+    ["1","原核生物は大腸菌や乳酸菌などの真生細菌と好熱菌や好塩菌などの（　　　）に分けられる","古細菌","正解：古細菌\nサイト参照"],
+    ["1","生物は原核生物と（　　）生物に分けられる","真核","正解：真核\nサイト参照"],
+    ["1","真核生物の大きさは（　～　）㎛である","1～5","正解：1～5\nサイト参照"],
+    ["1","真核生物の大きさは（　～　）㎛である","10～50","正解：10～50\nサイト参照"],
+    ["1","組織は働きや発生学的な経緯から（　　　　）と非上皮組織に分けられる","上皮組織","正解：上皮組織\nサイト参照"],
+    ["1","非上皮組織は（　　　　）、筋組織、神経組織に分けられる","結合組織","正解：結合組織\nサイト参照"],
+    ["1","非上皮組織は結合組織、（　　　）、神経組織に分けられる","筋組織","正解：筋組織\nサイト参照"],
+    ["1","非上皮組織は結合組織、筋組織、（　　　　）に分けられる","神経組織","正解：\nサイト参照"],
+    ["1","人の細胞の大きさは約（　～　）㎛である","10～30","正解：10～30\nサイト参照"],
+    ["1","成人では約（　　　）この細胞からできている","37兆","正解：37兆\nサイト参照"],
+    ["1","遺伝情報を補完し、DNAからRNAへ遺伝情報の転写を行う場は（　）である","核","正解：核\nサイト参照"],
+    ["1","糖質や脂質をATPに変換するエネルギー生産工場は（　　　　　　　）である","ミトコンドリア","正解：ミトコンドリア\nサイト参照"],
+    ["1","タンパク質の合成に重要な役割を持つ微粒子を（　　　　　）という","リボソーム","正解：リボソーム\nサイト参照"],
+    ["1","タンパク質の行き先を分別し仕分け、分泌の役割を持つのは（　　　　）である","ゴジル体","正解：ゴジル体\nサイト参照"],
+    ["1","多くの加水分解酵素を含み異物を分解するのは（　　　　　）である","リソソーム","正解：リソソーム\nサイト参照"],
+    ["1","細胞膜は（　　　　　　）構造からなる","リン脂質二重","正解：リン脂質二重\nサイト参照"],
+    ["1","膜くたんぱく質は特定の物質のみを通す性質である（　　　　　　）を持つ","選択的透過性","正解：選択的透過性\nサイト参照"],
+    ["1","生物を構成する有機化合物は（　　　　　）、糖質、脂質、核酸である","タンパク質","正解：タンパク質\nサイト参照"],
+    ["1","生物を構成する有機化合物はタンパク質、（　　）、脂質、核酸である","糖質","正解：糖質\nサイト参照"],
+    ["1","生物を構成する有機化合物はタンパク質、糖質、（　　）、核酸である","脂質","正解：脂質\nサイト参照"],
+    ["1","生物を構成する有機化合物はタンパク質、糖質、脂質、（　　）である","核酸","正解：核酸\nサイト参照"],
+    ["1","人の構成物質のうちタンパク質はおよそ（　～　）％である","14～17","正解：14～17\nサイト参照"],
+    ["1","人の構成物質のうち脂質はおよそ（　～　）％である","16～30","正解：16～30\nサイト参照"],
+    ["1","人の構成物質のうち糖質はおよそ（　～　）％である","0.5","正解：0.5\nサイト参照"],
+    ["1","人の構成物質のうち無機質はおよそ（　～　）％である","5","正解：5\nサイト参照"],
+    ["1","生体内で起こっている化学反応は（　　）である","代謝","正解：代謝\nサイト参照"],
+    ["1","声帯で物質が分解される過程は（　　）である","異化","正解：異化\nサイト参照"],
+    ["1","声帯で物質が合成される過程は（　　）である","同化","正解：同化\nサイト参照"],
+    ["1","作られた分子が生体にとって重要な反応を（　　　　）という","基礎代謝","正解：基礎代謝\nサイト参照"],
+    ["1","取り出されるエネルギーが生体にとって重要な反応を（　　　　　　）という","エネルギー代謝","正解：エネルギー代謝\nサイト参照"],
+    ["3","たんぱく質には約１００種類のアミノ酸が多数ペプチド結合してできた高分子化合物である","b2","正解：×\nタンパク質は約20種類のアミノ酸が多数ペプチド結合してできた高分子化合物です。詳しくはサイト参照"],
+    ["3","アミノ酸以外の成分を含むたんぱく質は誘導たんぱく質である","b2","正解:×\n複合たんぱく質です。詳しくはサイト参照"],
+    ["3","アミノ酸は酸性を示すアミノ基と塩基性を示すカルボキシル基を持つ","b2","正解:×\nアミノ酸は酸性を示すアミノ基と塩基性を示すカルボキシル基を持ちますが、アミノ基は塩基性を示し、カルボキシル基は酸性を示します。詳しくはサイト参照"],
+    ["3","たんぱく質を構成しているアミノ酸はD-αアミノ酸である","b2","正解:×\nたんぱく質を構成しているアミノ酸はL-αアミノ酸です。詳しくはサイト参照"],
+    ["3","グルタミン酸は必須アミノ酸の一つである","b2","正解:×\nグルタミン酸は必須アミノ酸ではありません。詳しくはサイト参照"],
+    ["3","分子中の陽荷電数と不荷電数とが等しくなるような水溶液のphを等電点という","b1","正解:〇\n詳しくはサイト参照"],
+    ["3","アミノ基とカルボキシル基から水が１分子取れて結合した化学結合をペプチド結合と呼ぶ","b1","正解:〇\n詳しくはサイト参照"],
+    ["3","たんぱく質の2次構造とはたんぱく質のアミノ酸配列をいう","b2","正解:×\nたんぱく質の2次構造とは、たんぱく質の反復構造を指します。詳しくはサイト参照"],
+    ["3","個々のタンパク質は固有の等電点を有する","b1","正解:〇\n詳しくはサイト参照"],
+    ["3","たんぱく質は等電点では融解度が最小となり、変性を受けやすい","b2","正解:×\n詳しくはサイト参照"],
+    ["3","たんぱく質はアミノ酸、ジペプチドやトリペプチドの形で大腸から吸収される","b2","正解：×\nサイト参照"],
+    ["3","膵臓から分泌されるトリプシンやキモトリプシンの至適phは酸性である","b2","正解：×\nサイト参照"],
+    ["3","ペプシンが最大活性を示すphはph5～6である","b2","正解：×\nサイト参照"],
+    ["3","たんぱく質分解酵素は不活性型として分泌され、酸や膵液の作用を受けて活性型に変化する","b1","正解：〇\nサイト参照"],
+    ["3","吸収されたアミノ酸はたんぱく質の合成のみに利用される","b2","正解：×\nサイト参照"],
+    ["3","たんぱく質の窒素は最終的に肝臓で尿素に合成され、尿中に放出される","b1","正解：〇\nサイト参照"],
+    ["3","たんぱく質の体内での分解終末産物はH2OとCO2及び窒素化合物などである","b1","正解：〇\nサイト参照"],
+    ["3","尿素は腎臓で尿素サイクルによりアンモニアから作られる","b2","正解：×\nサイト参照"],
+    ["3","有害なアンモニアを無害な尿素に変える回路を尿素回路という","b1","正解：〇\nサイト参照"],
+    ["3","腎機能の低下によりアンモニアの血中濃度が高くなると脳細胞を麻痺させることがある","b2","正解：×\nサイト参照"],
+    ["1","尿素回路は毒性の強い（　　　　　）を尿素へ代謝する回路である","アンモニア","正解：アンモニア\nサイト参照"],
+    ["1","尿素回路は毒性の強いアンモニアを（　　）へ代謝する回路である","尿素","正解：尿素\nサイト参照"],
+    ["1","尿素は（　　　　　）が酵素アルギナーゼによる加水分解により生成する","アルギニン","正解：アルギニン\nサイト参照"],
+    ["1","尿素はアルギニンが酵素（　　　　　　）による加水分解により生成する","アルギナーゼ","正解：アルギナーゼ\nサイト参照"],
+    ["1","血中の尿素窒素濃度は（　）機能低下時に高くなる","腎","正解：腎\nサイト参照"],
+    ["1","アミノ酸は脱酸素酵素によるカルボキシル基を失って種々の（　　　　　　）となる","生体アミン","正解：生体アミン\nサイト参照"],
+    ["1","（　　　　　　）は尿細管では全く再吸収されず、食事や尿量などによって影響を受けない","クレアチニン","正解：クレアチニン\nサイト参照"],
+    ["3","酵素は糖質の一種であり、経口摂取によって補われる","b2","正解：×\nサイト参照"],
+    ["3","酵素は生体内での化学反応を円滑に進行させる触媒の働きをしている","b1","正解：〇\nサイト参照"],
+    ["3","酸素は反応を速やかに進行させるが、酵素そのものも消費される","b2","正解：×\nサイト参照"],
+    ["3","酵素は活性化エネルギーを低下させる","b1","正解：〇\nサイト参照"],
+    ["3","酵素は37度、忠誠で最も活性を示す","b2","正解：×\nサイト参照"],
+    ["3","酵素反応における反応速度は、その酵素量に反比例する","b2","正解：×\nサイト参照"],
+    ["3","kmとはvmaxの2分の1の酵素反応速度を与えるときの基質濃度をいう","b1","正解：〇\nサイト参照"],
+    ["3","基質のkm値は大きいほうが酵素との結合力が強いことを意味する","b2","正解：×\nサイト参照"],
+    ["3","同じ個体内に存在し基質特異性は同じであるが、基質親和性、阻害剤による阻害率などが異なる酵素をアイソザイムという","b1","正解：〇\nサイト参照"],
+    ["3","酵素活性発現に必要な必須の低分子性の有機化合物は補酵素である","b1","正解：〇\nサイト参照"],
+    ["3","γ-GTは腎臓の機能を反映する酵素である","b2","正解：×\nサイト参照"],
+    ["3","糖とはアルデヒド基またはケトン基を有する多価アルコールである","b1","正解：〇\nプリントにあります"],
+    ["3","アルデヒド基を有する単糖をケトースという","b2","正解：×\nプリントにあります"],
+    ["3","ケトースの代表的なものにフルクトースがあげられる","b1","正解：〇\nプリントにあります"],
+    ["3","人の体内の単糖類のほとんどがL型である","b2","正解：×\nプリントにあります"],
+    ["3","グルコースの一位のOH基が下向きだとβ型となる","b2","正解：×\nプリントにあります"],
+    ["3","αアミラーゼはβ結合のセルロースを消化できない","b1","正解：〇\nプリントにあります"],
+    ["3","オリゴ糖は１個の糖からなる","b2","正解：×\nプリントにあります"],
+    ["3","甘味料として用いられるソルビトールやキシリトールは糖アルコールの１種である","b1","正解：〇\nプリントにあります"],
+    ["3","グリコーゲンが認められるのは腎臓である","b2","正解：×\nプリントにあります"],
+    ["3","複合多糖の１種であるヘパリンは抗血液凝固活性を有する","b1","正解：〇\nプリントにあります"],
+    ["1","マルトースは２分子の（　　　　　）がα1－4結合したものである","グルコース","正解：グルコース\nプリントにあります"],
+    ["1","マルトースは２分子のグルコースが（　　　　）結合したものである","α1－4","正解：α1－4\nプリントにあります"],
+    ["1","ラクトースはグルコースと（　　　　　　）がβ1－4結合したものである","ガラクトース","正解：ガラクトース\nプリントにあります"],
+    ["1","ラクトースはグルコースとガラクトースが（　　　　）結合したものである","β1－4","正解：β1－4\nプリントにあります"],
+    ["1","スクロースはグルコースと（　　　　　　）がα1－2結合したものである","フルクトース","正解：フルクトース\nプリントにあります"],
+    ["1","スクロースはグルコースとフルクトースが（　　　　）結合したものである","α1－2","正解：α1－2\nプリントにあります"],
+    ["1","グリコーゲンはグルコース同士が（　　　　）結合やα1－6結合した巨大分子である","α1－4","正解：α1－4\nプリントにあります"],
+    ["1","グリコーゲンはグルコース同士がα1－4結合や（　　　　）結合した巨大分子である","α1－6","正解：α1－6\nプリントにあります"],
+    ["1","セルロースはグルコース同士が（　　　　）結合した植物細胞壁の構成成分である","β1－4","正解：β1－4\nプリントにあります"],
+    ["3","小腸に分布する酵素は小腸粘膜上皮細胞の微絨毛に存在し、微絨毛では消化と同時に吸収が行われる","b1","正解：〇\nプリントにあります"],
+    ["3","小腸で分解された担当は血中に輸送され血糖となり肝動脈を介して肝臓に輸送される","b2","正解：×\nプリントにあります"],
+    ["3","グルコースはグリコーゲンとして肝臓や筋肉に貯蔵されるが、グリコーゲンがグルコースになり組織に供給されることはない","b2","正解：×\nプリントにあります"],
+    ["3","クエン酸回路はアセチルCoAがビルビン酸と縮合しクエン酸が生成する反応を初発とする","b2","正解：×\nプリントにあります"],
+    ["3","好気性条件の場合、1グルコースから32ATPが生産される","b2","正解：×\nプリントにあります"],
+    ["3","糖以外物質からグルコースを生成することを糖新生という","b1","正解：〇\nプリントにあります"],
+    ["3","血糖値を下げるホルモンはインスリンのみである","b1","正解：〇\nプリントにあります"],
+    ["3","血糖値の正常値は約70～110㎎/dlである","b1","正解：〇\nプリントにあります"],
+    ["3","二型糖尿病は自己免疫学的機序により、膵臓β細胞を破壊するために発症する","b2","正解：×\nプリントにあります"],
+    ["3","一般的に糖尿病と表現した場合には1型糖尿病を指すことが多い","b2","正解：×\nプリントにあります"],
+    ["3","ヘモグロビンA1Cは1－2か月の平均血糖値を反映している","b1","正解：〇\nプリントにあります"],
+    ["1","グルコースのエネルギー代謝では1molのATPがADPに分解されるとき、約（   ）Kcalのエネルギーが生じる","7.3","正解：7.3\nプリントにあります"],
+    ["1","好気的条件ではグルコース1分子当たり（　　）分子のATPを生産する","32","正解：32\nプリントにあります"],
+    ["1","1分子のNADHが電子伝達系で酸化されるとATPは（　　　）分子生産される","2.5","正解：2.5\nプリントにあります"],
+    ["1","1分子のFADH2が電子伝達系で酸化されるとATPは（　　　）分子生産される","1.5","正解：1.5\nプリントにあります"],
+    ["1","好気的条件下でグルコース1分子からATPは（　　）分子生産される","32","正解：32\nプリントにあります"],
+    ["1","乳酸、アミノさん、グリセロールなど調質以外の成分からグルコースを生産することを（　　　）という","糖新生","正解：糖新生\nプリントにあります"],
+    ["1","血中グルコースが（　　　）mg/dlをこえると、尿中にグルコースが漏出される","180","正解：180\nプリントにあります"],
+    ["3","脂質は水に溶けない。又は溶けにくい","b1","正解：〇\nプリントにあります"],
+    ["3","貯蔵脂肪は主として中性脂肪からなっている","b1","正解：〇\nプリントにあります"],
+    ["3","食物中の脂肪の大部分は中性脂肪である","b1","正解：〇\nプリントにあります"],
+    ["3","リノール酸、リノレン酸、アラギドン酸は不飽和脂肪酸である","b1","正解：〇\nプリントにあります"],
+    ["3","パルチミン酸とステアリン酸は不飽和脂肪酸であり必須脂肪酸である","b2","正解：×\nプリントにあります"],
+    ["3","必須脂肪酸は脂肪酸の中でも人間が体内で生成できない脂肪酸のことを指し一価飽和脂肪酸である","b2","正解：×\nプリントにあります"],
+    ["3","単純脂質にはリン酸や糖脂質などがある","b2","正解：×\nプリントにあります"],
+    ["3","オレイン酸はオリーブ油などに含まれるn-9系脂肪酸である。不飽和脂肪酸の中で最も酸化されにくい","b1","正解：〇\nプリントにあります"],
+    ["3","レシチンなどのリン脂質は細胞膜の構成成分として重要である","b1","正解：〇\nプリントにあります"],
+    ["1","ヒト血中の大部分の脂質は（　　　）と結合しており、タンパク質に囲まれたリポたんぱく質の形で血液中に流れる","脂肪酸","正解：脂肪酸\nプリントにあります"],
+    ["1","ヒト血中の大部分の脂質は脂肪酸と結合しており、タンパク質に囲まれた（　　　　　　　）の形で血液中に流れる","リポたんぱく質","正解：リポたんぱく質\nプリントにあります"],
+    ["1","一般的に脂肪と呼ばれるトリアシルグリーセロールは（　　　　　　）と3分子の脂肪酸がエステル結合したものである","グリセロール","正解：グリセロール\nプリントにあります"],
+    ["1","一般的に脂肪と呼ばれるトリアシルグリーセロールはグリセロールと3分子の（　　　）がエステル結合したものである","脂肪酸","正解：脂肪酸\nプリントにあります"],
+    ["1","一般的に脂肪と呼ばれるトリアシルグリーセロールはグリセロールと3分子の脂肪酸が（　　　　）結合したものである","エステル","正解：エステル\nプリントにあります"],
+    ["1","天然の飽和脂肪酸はほとんど（　　）型である","シス","正解：シス\nプリントにあります"],
+    ["1","リン脂質は（　　　）を構成する主成分の一つである","細胞膜","正解：細胞膜\nプリントにあります"],
+    ["3","吸収された調査脂肪酸は腸壁で中性脂肪に再合成され、タンパク質やコレステロールなどと結合してリン脂質となる","b2","正解：×\nキロミクロンになります。"],
+    ["3","腸壁で作られたキロミクロンの大部分は腸間膜の血管から門脈を経て肝臓へ運ばれる","b2","正解：×\nリンパ管を経て運ばれます"],
+    ["3","脂肪酸の分解反応であるβ参加は細胞リソソームで行われる","b2","正解：×\nミトコンドリアで作られます"],
+    ["3","アセチルCoAはクエン酸回路で代謝されATPを生産する","b1","正解：×\nプリントにあります"],
+    ["3","脂質は糖質に比べATP生産量が圧倒的に多い","b1","正解：〇\nプリントにあります"],
+    ["3","糖質の不完全酸化物をケトン体という","b2","正解：×\nケトン体は脂質の不完全酸化物です。"],
+    ["3","糖尿病ではケトン体が蓄積し、ケトアシドーシスになることがある","b1","正解：〇\nプリントにあります"],
+    ["3","コレステロールはほとんどが食事から摂取される","b2","正解：×\n体内で合成されます"],
+    ["3","高血圧の薬としてHMG-CoA還元酵素阻害薬が多く用いられている","b2","正解：×\n高コレステロール血症の薬です。"],
+    ["3","胆汁は再吸収され利用される。これを腸肝循環という","b1","プリントにあります"],
+    ["3","HDLコレステロールは動脈硬化促進作用を有し悪玉コレステロールと呼ばれる","b2","正解：×\nLDLコレステロールが悪玉コレステロールです"],
+    ["1","LDLは（　　　　　　　　　）を運搬する作用を持ち動脈硬化症の危険因子である","肝臓コレステロール","正解：肝臓コレステロール\nプリントにあります"],
+    ["1","LDLは肝臓コレステロールを運搬する作用を持ち（　　　　）症の危険因子である","動脈硬化","正解：動脈硬化\nプリントにあります"],
+    ["1","VLDLは肝臓で作られた（　　　　　　　）を運搬する作用を持つ","トリグリセリド","正解：トリグリセリド\nプリントにあります"],
+    ["1","脂肪酸がミトコンドリアを通過するには（　　　　　）が必要である","カルニチン","正解：カルニチン\nプリントにあります"],
+    ["1","脂肪酸がβ酸化を受けると（　　　　   ）が生成される。生成した（　　　　　   ）はTCA回路で分解される","アセチルCoA","正解：アセチルCoA\nプリントにあります"],
+    ["1","脂肪酸がβ酸化を受けるとアセチルCoAが生成される。生成したアセチルCoAは（   ）回路で分解される","TCA","正解：TCA\nプリントにあります"],
+    ["1","コレステロールは（　　　　   ）を素材としてHMG-CoA、メバロン酸、スクワレンを経て合成される","アセチルCoA","正解：アセチルCoA\nプリントにあります"],
+    ["3","遺伝子DNAは細胞の核に存在する","b1","正解：〇\nプリントにあります"],
+    ["3","リボースとデオキシリボースは核酸の成分として重要である","b1","正解：〇\nプリントにあります"],
+    ["3","DNAは延期としてアデニン、グアニン、シトシンおよびウラシルを含む","b2","正解：×\nチミンを含みます。"], 
+    ["3","ヌクレオチドの基本構造は塩基と糖とリン酸からなっている","b1","正解：〇\nプリントにあります"],
+    ["3","DNAは糖としてリボースを含む","b2","正解：×\nデオキシリボースを含みます。"],
+    ["3","DNAもRNAもその構造中にリン酸を含んでいる","b1","正解：〇\nプリントにあります"],
+    ["3","すべてのRNAは二重らせん構造を有している","b2","正解：×\nDNAが二重らせん構造を有します。"],
+    ["3","主として粗面小胞体のリボソームという顆粒の上でタンパク質の合成が行われる","b1","正解：〇\nプリントにあります"],
+    ["3","tRNAはDNA情報を写し取ったものである","b2","正解：×\nmRNAがDNAを写し取ったものです。"],
+    ["3","RNAの大多数を占めるのはmRNAである","b2","正解：×\nrRNAが大多数です。"],
+    ["1","DNAのプリン塩基は（　　　　）とグアニンである","アデニン","正解：アデニン\nプリントにあります"],
+    ["1","DNAのプリン塩基はアデニンと（　　　　）である","グアニン","正解：グアニン\nプリントにあります"],
+    ["1","DNAのピリミジン塩基は（　　　　）とチミンである","シトシン","正解：シトシン\nプリントにあります"],
+    ["1","DNAのピリミジン塩基はシトシンと（　　　）である","チミン","正解：チミン\nプリントにあります"],
+    ["1","DNA鎖の塩基は互いに相補的な（　　）結合で対を作っている","水素","正解：水素\nプリントにあります"],
+    ["1","DNA塩基対の組み合わせはアデニンと（　　　）、グアニンとシトシンである","チミン","正解：チミン\nプリントにあります"],
+    ["1","DNA塩基対の組み合わせはアデニンとチミン、グアニンと（　　　　）である","シトシン","正解：シトシン\nプリントにあります"],
+    ["1","DNAの遺伝情報を持つ部分を（　　　　）、持たない部分をイントロンという","エキソン","正解：エキソン\nプリントにあります"],
+    ["1","DNAの遺伝情報を持つ部分をエキソン、持たない部分を（　　　　　）という","イントロン","正解：イントロン\nプリントにあります"],
+    ["1","DNAからmRNAが生成される反応を（　　）という","転写","正解：転写\nプリントにあります"],
+    ["1","DNAがRNAに転写されるときにチミンは（　　　　）に置き換わる","ウラシル","正解：ウラシル\nプリントにあります"],
+    ["1","いらなくなったプリン塩基は（　　）となって尿中に排泄される","尿酸","正解：尿酸\nプリントにあります"],
+    ["3","腎臓は体の腹部に左右1対ある","b2","正解：×\n腎臓は体の背部にあります。"],
+    ["3","腎臓で尿を生成する部分はネフロンと呼ばれ、腎小体と尿細管から構成される","b1","正解：〇\nプリントにあります"],
+    ["3","健常人で尿中にタンパク質が検出されることは全くない","b2","正解：×\n過度の運動やストレスによって検出されることがあります。"],
+    ["3","尿アルブミンは糖尿病成人症の早期診断に用いられる","b1","正解：〇\nプリントにあります"],
+    ["3","健常人でも少量のグルコースは尿y痛に排泄されつが、通常は検出感度以下である","b1","正解：〇\nプリントにあります"],
+    ["3","食後すぐに検査をすると一過性の高血糖のために尿等が陽性にあることがある","b1","正解：〇\nプリントにあります"],
+    ["3","タンパク質の窒素は最終的には肝の尿素回路（オルニチンサイクル）で尿酸となり腎臓から尿中へ排泄される","b2","正解：×\nオルニチンサイクルでは尿素を生成します。"],
+    ["3","不要となった核酸のプリン体は分解され尿素となる","b2","正解：×\n不要となった核酸は尿酸となります。"],
+    ["3","クレアチニンはクレアチンの老廃物で腎臓に運ばれて最終的に尿中に排出される","b1","正解：〇\nプリントにあります"],
+    ["3","糖尿病、飢餓状態、栄養不良では尿でケトン体が陽性となり、血液はアルカローシスとなる","b2","正解：×\nケトン体が陽性となると血液はアシドーシスとなります。"],
+    ["3","尿検査では簡便な方法として尿試験紙を用いて検査が行われることが多い","b1","正解：〇\nプリントにあります"],
+    ["3","尿検査は尿の生成に直接関係する腎臓や尿路系の疾患のみを反映している","b2","正解：×\n全身疾患に反応します"],
+    ["3","尿中ビリルビンは健常人には検出されない","b1","正解：〇\nプリントにあります"],
+    ["3","ウロビリノゲンは弱陽性が正常であり＋１以上、－１以下は異常である","b1","正解：〇\nプリントにあります"],
+    ["3","尿沈渣は尿中の細胞成分や細菌などを試験紙で調べる検査である","b2","正解：×\n顕微鏡で調べます。"],
+    ["1","腎小体は毛細血管が糸まり状になった（　　　）と、それを包む袋状のボウマン嚢から構成される","糸球体","正解：糸球体\nプリントにあります"],
+    ["1","腎小体は毛細血管が糸まり状になった糸球体と、それを包む袋状の（　　　　　）から構成される","ボウマン嚢","正解：ボウマン嚢\nプリントにあります"],
+    ["1","（　　　　　　　（　　　　　））を大量に服用していると尿等が陽性であっても試験紙法での結果が陽性であっても試験紙法での結果が陰性となる偽陰性を示すことがある","アスコルビン酸（ビタミンC）","正解：アスコルビン酸（ビタミンC）\nプリントにあります"],
+    ["1","アスコルビン酸（ビタミンC）を大量に服用していると尿等が陽性であっても試験紙法での結果が陽性であっても試験紙法での結果が（　）性となる偽陰性を示すことがある","陰","正解：陰\nプリントにあります"],
+    ["1","アスコルビン酸（ビタミンC）を大量に服用していると尿等が陽性であっても試験紙法での結果が陽性であっても試験紙法での結果が陰性となる（　　）性を示すことがある","偽陰","正解：偽陰\nプリントにあります"],
+    ["1","一般的には尿検査は（　　　　　）が最適とされている","早朝第1尿","正解：早朝第1尿\nプリントにあります"],
+    ["1","健康人の尿量の基準値は（　　から　　）ml/日であるが、飲水量・発汗量などによって増減する","1000から1500","正解：1000から1500\nプリントにあります"],
+    ["1","健康人の尿pHの基準値はpH（　　から　　）で平均pHは6.0であり疾患がある場合は異常値を示す","5.0から7.0","正解：5.0から7.0\nプリントにあります"],
+    ["1","健康人の尿pHの基準値はpH5.0から7.0で平均pHは（　　）であり疾患がある場合は異常値を示す","6.0","正解：6.0\nプリントにあります"],
+
+];
+
+// ===================== アプリ状態 =====================
+let questions = [];
+let currentIdx = 0;
+let score = 0;
+let total = 0;
+let answered = false;
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function goToCount() {
+  document.getElementById('total-label').textContent = `全 ${monndai.length} 問から出題`;
+  showScreen('count-screen');
+  document.getElementById('count-input').focus();
+}
+
+function startQuiz() {
+  const val = parseInt(document.getElementById('count-input').value);
+  if (!val || val < 1) {
+    alert('1以上の数字を入力してください。');
+    return;
+  }
+  total = Math.min(val, monndai.length);
+  score = 0;
+  currentIdx = 0;
+  answered = false;
+  questions = shuffle([...monndai]).slice(0, total);
+  showScreen('quiz-screen');
+  renderQuestion();
+}
+
+function renderQuestion() {
+  answered = false;
+  const q = questions[currentIdx];
+  const type = q[0];
+
+  // progress
+  const pct = (currentIdx / total) * 100;
+  document.getElementById('prog-fill').style.width = pct + '%';
+  document.getElementById('prog-label').textContent = `${currentIdx + 1} / ${total}`;
+
+  // badge
+  const badge = document.getElementById('qtype-badge');
+  const typeMap = {'1':'穴埋め問題','2':'4択問題','3':'〇✕問題','5':'2択問題'};
+  badge.textContent = typeMap[type] || '問題';
+  badge.className = `qtype-badge qtype-${type}`;
+
+  // question
+  document.getElementById('question-text').textContent = `第${currentIdx+1}問　${q[1]}`;
+
+  // hide explanation
+  const expEl = document.getElementById('explanation');
+  expEl.classList.remove('visible');
+  document.getElementById('btn-next').classList.remove('visible');
+
+  const area = document.getElementById('answer-area');
+  area.innerHTML = '';
+
+  if (type === '2') {
+    // 4択
+    const choices = shuffle([q[2], q[3], q[4], q[5]]);
+    const div = document.createElement('div');
+    div.className = 'choices';
+    choices.forEach(c => {
+      const btn = document.createElement('button');
+      btn.className = 'choice-btn';
+      btn.textContent = c;
+      btn.onclick = () => judgeType2(btn, c, q[2], q, div);
+      div.appendChild(btn);
+    });
+    area.appendChild(div);
+  } else if (type === '3') {
+    // 〇✕
+    const correctBtn = q[2]; // "b1"=〇 "b2"=✕
+    const row = document.createElement('div');
+    row.className = 'tf-row';
+    const maru = document.createElement('button');
+    maru.className = 'tf-btn'; maru.textContent = '〇';
+    maru.onclick = () => judgeType3(maru, 'b1', correctBtn, q, row);
+    const batsu = document.createElement('button');
+    batsu.className = 'tf-btn'; batsu.textContent = '✕';
+    batsu.onclick = () => judgeType3(batsu, 'b2', correctBtn, q, row);
+    row.appendChild(maru); row.appendChild(batsu);
+    area.appendChild(row);
+  } else if (type === '1') {
+    // 穴埋め
+    const row = document.createElement('div');
+    row.className = 'fill-row';
+    const input = document.createElement('input');
+    input.className = 'fill-input'; input.type = 'text';
+    input.placeholder = '回答を入力…';
+    input.onkeydown = (e) => { if (e.key === 'Enter') judgeType1(input, q); };
+    const btn = document.createElement('button');
+    btn.className = 'btn-submit'; btn.textContent = '回答する';
+    btn.onclick = () => judgeType1(input, q);
+    row.appendChild(input); row.appendChild(btn);
+    area.appendChild(row);
+    setTimeout(() => input.focus(), 50);
+  } else if (type === '5') {
+    // 2択
+    const choices = shuffle([
+      {label: q[2], val: '2'},
+      {label: q[3], val: '3'}
+    ]);
+    const div = document.createElement('div');
+    div.className = 'choices';
+    choices.forEach(c => {
+      const btn = document.createElement('button');
+      btn.className = 'choice-btn';
+      btn.textContent = c.label;
+      btn.onclick = () => judgeType5(btn, c.val, q, div);
+      div.appendChild(btn);
+    });
+    area.appendChild(div);
+  }
+}
+
+function showExplanation(isCorrect, explanationText) {
+  answered = true;
+  const expEl = document.getElementById('explanation');
+  const lbl = document.getElementById('result-label');
+  lbl.textContent = isCorrect ? '正解！🎉' : '不正解…';
+  lbl.className = 'result-label ' + (isCorrect ? 'correct' : 'wrong');
+  document.getElementById('explanation-text').textContent = explanationText;
+  expEl.classList.add('visible');
+  document.getElementById('btn-next').classList.add('visible');
+  expEl.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+function judgeType2(clickedBtn, selected, correct, q, container) {
+  if (answered) return;
+  const isCorrect = selected === correct;
+  if (isCorrect) score++;
+  container.querySelectorAll('.choice-btn').forEach(b => {
+    b.disabled = true;
+    if (b.textContent === correct) b.classList.add('correct');
+    else if (b === clickedBtn && !isCorrect) b.classList.add('wrong');
+  });
+  showExplanation(isCorrect, q[6]);
+}
+
+function judgeType3(clickedBtn, selected, correct, q, container) {
+  if (answered) return;
+  const isCorrect = selected === correct;
+  if (isCorrect) score++;
+  // find explanation: it can be at index 3 or 5 depending on data format
+  const expl = q[3] || q[5] || '';
+  container.querySelectorAll('.tf-btn').forEach(b => {
+    b.disabled = true;
+    const isCircle = b.textContent === '〇';
+    const btnKey = isCircle ? 'b1' : 'b2';
+    if (btnKey === correct) b.classList.add('correct');
+    else if (b === clickedBtn && !isCorrect) b.classList.add('wrong');
+  });
+  showExplanation(isCorrect, expl);
+}
+
+function judgeType1(input, q) {
+  if (answered) return;
+  const userAns = input.value.trim();
+  if (!userAns) return;
+  // Use flexible matching (normalize)
+  const normalize = s => s.replace(/\s/g,'').toLowerCase();
+  const isCorrect = normalize(userAns) === normalize(q[2]);
+  if (isCorrect) score++;
+  input.disabled = true;
+  input.classList.add(isCorrect ? 'correct' : 'wrong');
+  input.nextElementSibling.disabled = true;
+  showExplanation(isCorrect, q[3]);
+}
+
+function judgeType5(clickedBtn, selected, q, container) {
+  if (answered) return;
+  const isCorrect = selected === '2'; // index 2 is correct choice
+  if (isCorrect) score++;
+  container.querySelectorAll('.choice-btn').forEach(b => {
+    b.disabled = true;
+    if (b.textContent === q[2]) b.classList.add('correct');
+    else if (b === clickedBtn && !isCorrect) b.classList.add('wrong');
+  });
+  showExplanation(isCorrect, q[4]);
+}
+
+function nextQuestion() {
+  currentIdx++;
+  if (currentIdx >= total) {
+    showResult();
+  } else {
+    renderQuestion();
+    document.getElementById('quiz-card').scrollIntoView({behavior:'smooth', block:'start'});
+  }
+}
+
+function showResult() {
+  const pct = Math.round((score / total) * 100);
+  document.getElementById('score-num').textContent = pct;
+  document.getElementById('score-denom').textContent = `/ 100点`;
+  document.getElementById('prog-fill').style.width = '100%';
+
+  let hyouka, sub;
+  if (pct === 100) { hyouka = '満点合格おめでとう！！🎊'; sub = '完璧です！素晴らしい！'; }
+  else if (pct >= 80) { hyouka = 'おしい！あと少しで満点！'; sub = `正解数: ${score} / ${total}`; }
+  else if (pct >= 60) { hyouka = '合格おめでとう！！'; sub = `正解数: ${score} / ${total}`; }
+  else if (pct >= 50) { hyouka = '惜しい！もう少しで合格！'; sub = 'もう一回チャレンジしてね！'; }
+  else if (pct <= 10) { hyouka = '本当に勉強してる!？😅'; sub = '頑張れ！'; }
+  else { hyouka = '勉強してからもう一度！'; sub = `正解数: ${score} / ${total}`; }
+
+  document.getElementById('hyouka-text').textContent = hyouka;
+  document.getElementById('hyouka-sub').textContent = sub;
+  showScreen('result-screen');
+}
+
+function restart() {
+  document.getElementById('count-input').value = '';
+  showScreen('count-screen');
+  document.getElementById('count-input').focus();
+}
+</script>
+</body>
+</html>

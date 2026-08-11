@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>微生物学 クイズ</title>
+<style>
+  :root {
+    --bg: #f0f4f8;
+    --card: #ffffff;
+    --primary: #2c6fad;
+    --primary-dark: #1a4f80;
+    --accent: #e05577;
+    --correct: #27ae60;
+    --wrong: #e74c3c;
+    --text: #1a2533;
+    --muted: #6b7c93;
+    --border: #d0dce8;
+    --yellow: #fff591;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  /* ===== SCREENS ===== */
+  .screen { display: none; width: 100%; max-width: 700px; }
+  .screen.active { display: flex; flex-direction: column; align-items: center; }
+
+  /* ===== HOME ===== */
+  #home-screen {
+    text-align: center;
+    gap: 28px;
+  }
+  .home-title {
+    font-size: 3.5rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    color: var(--primary);
+    line-height: 1;
+  }
+  .home-subtitle {
+    font-size: 1rem;
+    color: var(--muted);
+    margin-top: -10px;
+  }
+  .home-badge {
+    display: inline-block;
+    background: var(--primary);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    padding: 4px 12px;
+    border-radius: 20px;
+    text-transform: uppercase;
+  }
+
+  /* ===== COUNT SCREEN ===== */
+  #count-screen { gap: 24px; }
+  .count-card {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 36px 40px;
+    box-shadow: 0 4px 20px rgba(44,111,173,0.10);
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .count-card h2 { font-size: 1.4rem; color: var(--primary); }
+  .count-card p { font-size: 0.9rem; color: var(--muted); }
+  .count-input {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 1.3rem;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    outline: none;
+    text-align: center;
+    transition: border-color 0.2s;
+  }
+  .count-input:focus { border-color: var(--primary); }
+  .total-count { color: var(--muted); font-size: 0.85rem; text-align: right; }
+
+  /* ===== QUIZ SCREEN ===== */
+  #quiz-screen { gap: 20px; width: 100%; max-width: 760px; }
+  .progress-bar-wrap {
+    width: 100%;
+    background: var(--border);
+    border-radius: 99px;
+    height: 8px;
+  }
+  .progress-bar-fill {
+    height: 8px;
+    background: linear-gradient(90deg, var(--primary), #5ba4d9);
+    border-radius: 99px;
+    transition: width 0.4s ease;
+  }
+  .progress-label {
+    font-size: 0.8rem;
+    color: var(--muted);
+    width: 100%;
+    text-align: right;
+  }
+  .quiz-card {
+    background: var(--card);
+    border-radius: 18px;
+    padding: 36px 40px;
+    box-shadow: 0 4px 24px rgba(44,111,173,0.10);
+    width: 100%;
+  }
+  .qtype-badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-bottom: 16px;
+    text-transform: uppercase;
+  }
+  .qtype-1 { background: #e8f4fd; color: #2c6fad; }
+  .qtype-2 { background: #edf9f0; color: #27ae60; }
+  .qtype-3 { background: #fef3cd; color: #c07c00; }
+  .qtype-5 { background: #f3e8fd; color: #7b2dad; }
+  .question-text {
+    font-size: 1.15rem;
+    line-height: 1.7;
+    font-weight: 600;
+    margin-bottom: 28px;
+    color: var(--text);
+  }
+
+  /* choices */
+  .choices { display: flex; flex-direction: column; gap: 10px; }
+  .choice-btn {
+    display: block;
+    width: 100%;
+    padding: 14px 20px;
+    background: #f6f9fc;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    font-size: 1rem;
+    font-family: inherit;
+    color: var(--text);
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.15s;
+  }
+  .choice-btn:hover:not(:disabled) {
+    background: #e8f2fc;
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+  .choice-btn.correct { background: #d4f5e2; border-color: var(--correct); color: #1a6e3e; font-weight: 700; }
+  .choice-btn.wrong   { background: #fde8e8; border-color: var(--wrong);   color: #8b1a1a; }
+  .choice-btn:disabled { cursor: default; }
+
+  /* true/false */
+  .tf-row { display: flex; gap: 16px; justify-content: center; margin-top: 8px; }
+  .tf-btn {
+    width: 140px;
+    height: 80px;
+    font-size: 2rem;
+    border: 2px solid var(--border);
+    border-radius: 14px;
+    background: #f6f9fc;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .tf-btn:hover:not(:disabled) { background: #e8f2fc; border-color: var(--primary); }
+  .tf-btn.correct { background: #d4f5e2; border-color: var(--correct); }
+  .tf-btn.wrong   { background: #fde8e8; border-color: var(--wrong); }
+  .tf-btn:disabled { cursor: default; }
+
+  /* fill-in */
+  .fill-row { display: flex; gap: 10px; align-items: center; }
+  .fill-input {
+    flex: 1;
+    padding: 12px 16px;
+    font-size: 1.1rem;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    outline: none;
+    font-family: inherit;
+    transition: border-color 0.2s;
+  }
+  .fill-input:focus { border-color: var(--primary); }
+  .fill-input.correct { border-color: var(--correct); background: #d4f5e2; }
+  .fill-input.wrong   { border-color: var(--wrong);   background: #fde8e8; }
+
+  /* ===== EXPLANATION ===== */
+  .explanation {
+    display: none;
+    margin-top: 20px;
+    padding: 20px 24px;
+    border-radius: 12px;
+    background: var(--yellow);
+    border-left: 5px solid var(--accent);
+    font-size: 0.95rem;
+    line-height: 1.7;
+    white-space: pre-line;
+  }
+  .explanation.visible { display: block; }
+  .result-label {
+    font-size: 1.4rem;
+    font-weight: 800;
+    margin-bottom: 8px;
+  }
+  .result-label.correct { color: var(--correct); }
+  .result-label.wrong   { color: var(--wrong); }
+
+  /* ===== RESULT SCREEN ===== */
+  #result-screen { gap: 24px; text-align: center; }
+  .result-card {
+    background: var(--card);
+    border-radius: 18px;
+    padding: 48px 40px;
+    box-shadow: 0 4px 24px rgba(44,111,173,0.10);
+    width: 100%;
+  }
+  .score-circle {
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), #5ba4d9);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 24px;
+    box-shadow: 0 8px 30px rgba(44,111,173,0.3);
+  }
+  .score-num { font-size: 3rem; font-weight: 900; line-height: 1; }
+  .score-denom { font-size: 1rem; opacity: 0.8; }
+  .hyouka-text { font-size: 1.5rem; font-weight: 700; margin-bottom: 8px; color: var(--primary); }
+  .hyouka-sub  { font-size: 0.9rem; color: var(--muted); }
+
+  /* ===== BUTTONS ===== */
+  .btn-primary {
+    padding: 16px 48px;
+    font-size: 1.15rem;
+    font-weight: 700;
+    font-family: inherit;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    box-shadow: 0 4px 16px rgba(44,111,173,0.25);
+  }
+  .btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-next {
+    margin-top: 20px;
+    padding: 12px 36px;
+    font-size: 1rem;
+    font-weight: 700;
+    font-family: inherit;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s;
+    display: none;
+  }
+  .btn-next.visible { display: inline-block; }
+  .btn-next:hover { background: #c03060; }
+  .btn-submit {
+    padding: 12px 32px;
+    font-size: 1rem;
+    font-weight: 700;
+    font-family: inherit;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s;
+    white-space: nowrap;
+  }
+  .btn-submit:hover { background: var(--primary-dark); }
+  .btn-submit:disabled { background: var(--border); cursor: default; }
+</style>
+</head>
+<body>
+
+<!-- HOME -->
+<div id="home-screen" class="screen active">
+  <span class="home-badge">医療系国試対策</span>
+  <h1 class="home-title">微生物学</h1>
+  <p class="home-subtitle">ランダム出題クイズ</p>
+  <button class="btn-primary" onclick="goToCount()">スタート</button>
+</div>
+
+<!-- COUNT -->
+<div id="count-screen" class="screen">
+  <div class="count-card">
+    <h2>問題数を選んでください</h2>
+    <input class="count-input" type="number" id="count-input" min="1" placeholder="例: 10"
+      onkeydown="if(event.key==='Enter') startQuiz()">
+    <p class="total-count" id="total-label"></p>
+    <p>数字を入力してください（英数字は半角で）</p>
+    <button class="btn-primary" onclick="startQuiz()">問題へ</button>
+  </div>
+</div>
+
+<!-- QUIZ -->
+<div id="quiz-screen" class="screen">
+  <div class="progress-bar-wrap">
+    <div class="progress-bar-fill" id="prog-fill" style="width:0%"></div>
+  </div>
+  <div class="progress-label" id="prog-label">0 / 0</div>
+  <div class="quiz-card" id="quiz-card">
+    <span class="qtype-badge" id="qtype-badge"></span>
+    <div class="question-text" id="question-text"></div>
+    <div id="answer-area"></div>
+    <div class="explanation" id="explanation">
+      <div class="result-label" id="result-label"></div>
+      <div id="explanation-text"></div>
+    </div>
+    <div style="text-align:right">
+      <button class="btn-next" id="btn-next" onclick="nextQuestion()">次の問題 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- RESULT -->
+<div id="result-screen" class="screen">
+  <div class="result-card">
+    <div class="score-circle">
+      <div class="score-num" id="score-num">0</div>
+      <div class="score-denom" id="score-denom">/ 0点</div>
+    </div>
+    <div class="hyouka-text" id="hyouka-text"></div>
+    <div class="hyouka-sub" id="hyouka-sub"></div>
+  </div>
+  <button class="btn-primary" onclick="restart()">もう一度挑戦</button>
+</div>
+
+<script>
+// ===================== 問題データ =====================
+const monndai = [
+    ["1","パスツールは実験によって（　　　　）説を否定し、\n微生物は微生物から発生することを立証した。","自然発生","正解：自然発生\n授業プリントにあります。"],
+    ["1","パスツールは実験によって自然発生説を否定し、\n微生物は（　　　）から発生することを立証した。","微生物","正解：微生物\n授業プリントにあります。"],
+    ["1","コッホは、ゼラチンを使った（　　　　）を考案し、目的細菌を\n分離してその菌の実を（　　　　）することを初めて成功した","固形培地","正解：固形培地\n授業プリントにあります。"],
+    ["1","コッホは、ゼラチンを使った固形培地を考案し、目的細菌を\n分離してその菌の実を（　　　　）することを初めて成功した","純粋培養","正解：純粋培養\n授業プリントにあります。"],
+    ["1","人の感染症の原因となるものを（　　　）と呼ぶ","病原体","正解：病原体\n授業プリントにあります。"],
+    ["1","一般細菌は（　　）顕微鏡で刺殺可能である","光学","正解：光学\n授業プリントにあります。"],
+    ["1","ウイルスは（　　）顕微鏡でしか観察できない","電子","正解：電子\n授業プリントにあります。"],
+    ["1","（　　　　）には角膜に囲まれた明瞭な核構造、ミトコンドリアなどの細胞内小器官がない","原核細胞","正解：原核細胞\n授業プリントにあります。"],
+    ["1","（　　　　）は細胞構造を持たないため、原核・真核生物のいずれにも分けられない","ウイルス","正解：ウイルス\n授業プリントにあります。"],
+    ["1","病原体は（　　　）、真菌、細菌、ウイルス、プリオンの五つである","寄生虫","正解：寄生虫\n授業プリントにあります。"],
+    ["1","病原体は寄生虫、（　　）、細菌、ウイルス、プリオンの五つである","真菌","正解：真菌\n授業プリントにあります。"],
+    ["1","病原体は寄生虫、真菌、（　　）、ウイルス、プリオンの五つである","細菌","正解：細菌\n授業プリントにあります。"],
+    ["1","病原体は寄生虫、真菌、細菌、（　　　　）、プリオンの五つである","ウイルス","正解：ウイルス\n授業プリントにあります。"],
+    ["1","病原体は寄生虫、真菌、細菌、ウイルス、（　　　　）の五つである","プリオン","正解：プリオン\n授業プリントにあります。"],
+    ["1","㎛は何と読む","マイクロメートル","正解：マイクロメートル\n授業プリントにあります。"],
+    ["1","㎚は何と読む","ナノメートル","正解：ナノメートル\n授業プリントにあります。"],
+    ["1","1㎛は何mmか","0.001","正解：0.001\n授業プリントにあります。"],
+    ["1","1㎚は何nmか","0.001","正解：0.001\n授業プリントにあります。"],
+    ["1","垂直感染の伝播様式は（　　　）感染、経産道感染、母乳感染である","子宮内","正解：子宮内\n授業プリントにあります。"],
+    ["1","垂直感染の伝播様式は子宮内感染、（　　　）感染、母乳感染である","経産道","正解：経産道\n授業プリントにあります。"],
+    ["1","垂直感染の伝播様式は子宮内感染、経産道感染、（　　）感染である","母乳","正解：母乳\n授業プリントにあります。"],
+    ["1","新興感染症には（　　　　　　）、毒素性ショック症候群、後天性免疫不全症候群などがある","レジオネラ症","正解：レジオネラ症\n授業プリントにあります。"],
+    ["1","新興感染症にはレジオネラ症、（　　　　　　　　　　）、後天性免疫不全症候群などがある","毒素性ショック症候群","正解：毒素性ショック症候群\n授業プリントにあります。"],
+    ["1","新興感染症にはレジオネラ症、毒素性ショック症候群、（　　　　　　　　　　）などがある","後天性免疫不全症候群","正解：後天性免疫不全症候群\n授業プリントにあります。"],
+    ["1","再興感染症には（　　　）、結核、マラリアなどがある","コレラ","正解：コレラ\n授業プリントにあります。"],
+    ["1","再興感染症にはコレラ、（　　　）、マラリアなどがある","結核","正解：結核\n授業プリントにあります。"],
+    ["1","再興感染症にはコレラ、結核、（　　　）などがある","マラリア","正解：マラリア\n授業プリントにあります。"],
+    ["1","毒素型食中毒の主な原因菌は（　　　　　　　）やボツリヌス菌がある","黄色ブドウ球菌","正解：黄色ブドウ球菌\n授業プリントにあります"],
+    ["1","毒素型食中毒の主な原因菌は黄色ブドウ球菌や（　　　　　　）がある","ボツリヌス菌","正解：ボツリヌス菌\n授業プリントにあります"],
+    ["1","人獣共通感染症のうち、ウシが関連するものは（　　　　　　）やカンピロバクター腸炎などがある","リステリア菌","正解：リステリア菌\n授業プリントにあります。"],
+    ["1","人獣共通感染症のうち、ウシが関連するものはリステリア菌や（　　　　　　　　　　）などがある","カンピロバクター腸炎","正解：カンピロバクター腸炎\n授業プリントにあります。"],
+    ["1","（　　）免疫は正常な人が生まれながらに備えられている自然抵抗性で\n異物の侵入に対して、速やかに作用する。非特異的生体防御機構で\n感染を繰り返しても抵抗力が高まらない。","自然","正解：自然\n授業プリントにあります。"],
+    ["1","自然免疫は正常な人が生まれながらに備えられている自然抵抗性で\n異物の侵入に対して、速やかに作用する。（　　　）的生体防御機構で\n感染を繰り返しても抵抗力が高まらない。","非特異","正解：非特異\n授業プリントにあります。"],
+    ["1","（　　）免疫は生後に病原体やその成分に触れるとこによって\n獲得する抵抗力で、作用するのにやや時間はかかるものの、\n自然免疫で処理しきれなかった病原体・異物のそれぞれに対して\n特異的、かつより強力に作用してこれを排除する","獲得","正解：獲得\n授業プリントにあります。"],
+    ["1","獲得免疫は生後に病原体やその成分に触れるとこによって\n獲得する抵抗力で、作用するのにやや時間はかかるものの、\n（　　）免疫で処理しきれなかった病原体・異物のそれぞれに対して\n特異的、かつより強力に作用してこれを排除する","自然","正解：自然\n授業プリントにあります。"],
+    ["1","獲得免疫は生後に病原体やその成分に触れるとこによって\n獲得する抵抗力で、作用するのにやや時間はかかるものの、\n自然免疫で処理しきれなかった病原体・異物のそれぞれに対して\n（　　）的、かつより強力に作用してこれを排除する","特異","正解：特異\n授業プリントにあります。"],
+    ["1","Ⅰ型IFNは他の細胞のIFN受容体IFNreceptorに結合することでその細胞が\n（　　　）に抵抗できるようにする","ウイルス","正解：ウイルス\n授業プリントにあります。"],
+    ["1","（　　　　）は体内の異常細胞を見つけるとそれに特異的に結合し、\n異常細胞を破壊する","NK細胞","正解：NK細胞\n授業プリントにあります。"],
+    ["1","抗原提示細胞は異物のエピトーブ情報を（　　　　）に提示する薬物を持つ\n主なものに樹状細胞とマクロファージがある","リンパ球","正解：リンパ球\n授業プリントにあります。"],
+    ["1","抗原提示細胞は異物のエピトーブ情報をリンパ球に提示する薬物を持つ\n主なものに（　　　　）とマクロファージがある","樹状細胞","正解：樹状細胞\n授業プリントにあります。"],
+    ["1","抗原提示細胞は異物のエピトーブ情報をリンパ球に提示する薬物を持つ\n主なものに樹状細胞と（　　　　　　　）がある","マクロファージ","正解：マクロファージ\n授業プリントにあります。"],
+    ["1","B細胞は自分の担当する抗原を認識すると分裂・増殖して\n（　　）細胞に分化し、\nその抗原に対する抗体を生産する","形質","正解：形質\n授業プリントにあります。"],
+    ["1","人の抗体は構造の違いによってIgM、IgG、IgA、IgE、IgDの5つのクラスに分けられ\nIg( )は胎盤を通過し、IgEは一型過敏症に関係する","G","正解：G\n授業プリントにあります。"],
+    ["1","人の抗体は構造の違いによってIgM、IgG、IgA、IgE、IgDの5つのクラスに分けられ\nIgGは胎盤を通過し、Ig( )は一型過敏症に関係する","E","正解：E\n授業プリントにあります。"],
+    ["1","（　　）移植は人から人など同じ種に属する遺伝的に異なる他の個体への移植をいう","同種","正解：同種\n授業プリントにあります。"],
+    ["1","(  )移植は人とほかの動物など異なった種間の移植である","異種","正解：異種\n授業プリントにあります。"],
+    ["1","獲得免疫の内液性免疫の主体は（　　）である","抗体","正解：抗体\n授業プリントにあります。"],
+    ["1","細胞性免疫の主体は（　　　　　　）細胞や活性化マクロファージなどである","細胞傷害性T","正解：細胞傷害性T\n授業プリントにあります。"],
+    ["1","（　　　　　　）はウイルス感染細胞やがん細胞などの異変な細胞を認識して攻撃・破棄する作用がある","細胞傷害性T","正解：細胞傷害性T\n授業プリントにあります。"],
+    ["1","免疫反応の最初のステップは（　　　　）への抗原提示である","リンパ球","正解：リンパ球\n授業プリントにあります。"],
+    ["1","抗原を認識して免疫反応の中心的役割を担うのが\n（　　　　）、T細胞、B細胞である","リンパ球","正解：リンパ球\n授業プリントにあります。"],
+    ["1","抗原を認識して免疫反応の中心的役割を担うのが\nリンパ球、（　　　）、B細胞である","T細胞","正解：T細胞\n授業プリントにあります。"],
+    ["1","抗原を認識して免疫反応の中心的役割を担うのが\nリンパ球、T細胞、（　　　）である","B細胞","正解：B細胞\n授業プリントにあります。"],
+    ["1","感染症における三類感染症を下から選べ\n（　　　　）、腸管出血性大腸菌感染症、パラチフス、細菌性赤痢、コレラ\n「腸チフス、結核、腸管出血性大腸菌感染症、破傷風、ジフテリア、日本脳炎、パラチフス、マラリア、細菌性赤痢、狂犬病、デング熱、コレラ」","腸チフス","正解：腸チフス\n授業プリントにあります。"],
+    ["1","感染症における三類感染症を下から選べ\n腸チフス、（　　　　　　　　　　　）、パラチフス、細菌性赤痢、コレラ\n「腸チフス、結核、腸管出血性大腸菌感染症、破傷風、ジフテリア、日本脳炎、パラチフス、マラリア、細菌性赤痢、狂犬病、デング熱、コレラ」","腸管出血性大腸菌感染症","正解：腸管出血性大腸菌感染症\n授業プリントにあります。"],
+    ["1","感染症における三類感染症を下から選べ\n腸チフス、腸管出血性大腸菌感染症、（　　　　　）、細菌性赤痢、コレラ\n「腸チフス、結核、腸管出血性大腸菌感染症、破傷風、ジフテリア、日本脳炎、パラチフス、マラリア、細菌性赤痢、狂犬病、デング熱、コレラ」","パラチフス","正解：パラチフス\n授業プリントにあります。"],
+    ["1","感染症における三類感染症を下から選べ\n腸チフス、腸管出血性大腸菌感染症、パラチフス、（　　　　　）、コレラ\n「腸チフス、結核、腸管出血性大腸菌感染症、破傷風、ジフテリア、日本脳炎、パラチフス、マラリア、細菌性赤痢、狂犬病、デング熱、コレラ」","細菌性赤痢","正解：細菌性赤痢\n授業プリントにあります。"],
+    ["1","感染症における三類感染症を下から選べ\n腸チfス、腸管出血性大腸菌感染症、パラチfス、細菌性赤痢、（　　　）\n「腸チfス、結核、腸管出血性大腸菌感染症、破傷風、ジfテリア、日本脳炎、パラチfス、マラリア、細菌性赤痢、狂犬病、デング熱、コレラ」","コレラ","正解：コレラ\n授業プリントにあります。"],
+    ["1","細菌で、自己増殖できる最小の生き物は（　　　　）である","原核生物","正解：原核生物\n授業プリントにあります。"],
+    ["1","細菌には（　　　　　　　　）を主成分とする細胞壁がある","ペプチドグリカン","正解：ペプチドグリカン\n授業プリントにあります。"],
+    ["1","最近はその形から、（　　）、杆菌、螺旋菌の三種類に分けられる","球菌","正解：球菌\n授業プリントにあります。"],
+    ["1","最近はその形から、球菌、（　　）、螺旋菌の三種類に分けられる","杆菌","正解：杆菌\n授業プリントにあります。"],
+    ["1","最近はその形から、球菌、杆菌、（　　　　　）の三種類に分けられる","螺旋菌","正解：螺旋菌\n授業プリントにあります。"],
+    ["1","グラム陰性菌の細胞壁は、細胞質幕のすぐ外側に存在する\n（　　　　）層と、その外側にある外膜からなる","脂質二重","正解：脂質二重\n授業プリントにあります。"],
+    ["1","グラム陰性菌の細胞壁の外側は脂質二十膜で、外界に接する\n外側の層はリボ多糖（　　　）及び外膜たんぱく質より、内側の層はリン脂質\nよりなる。リボ多糖の資質部分であるリピドAは\n内毒素として活性を持つ","LPS","正解：LPS\n授業プリントにあります。"],
+    ["1","グラム陰性菌の細胞壁の外側は脂質二十膜で、外界に接する\n外側の層はリボ多糖（LPS）及び（　　　　　　）より、内側の層はリン脂質\nよりなる。リボ多糖の資質部分であるリピドAは\n内毒素として活性を持つ","外膜たんぱく質","正解：外膜たんぱく質\n授業プリントにあります。"],
+    ["1","グラム陰性菌の細胞壁の外側は脂質二十膜で、外界に接する\n外側の層はリボ多糖（LPS）及び外膜たんぱく質より、内側の層は（　　　　）\nよりなる。リボ多糖の資質部分であるリピドAは\n内毒素として活性を持つ","リン脂質","正解：リン脂質\n授業プリントにあります。"],
+    ["1","グラム陰性菌の細胞壁の外側は脂質二十膜で、外界に接する\n外側の層はリボ多糖（LPS）及び外膜たんぱく質より、内側の層はリン脂質\nよりなる。リボ多糖の資質部分であるリピドAは\n（　）毒素として活性を持つ","内","正解：内\n授業プリントにあります。"],
+    ["1","黄色ブドウ球菌はグラム（　）性菌である","陽","正解：陽\n授業プリントにあります。"],
+    ["1","大腸菌はグラム（　）性菌である","陰","正解：陰\n授業プリントにあります。"],
+    ["1","緑膿菌はグラム（　）性菌である","陰","正解：陰\n授業プリントにあります。"],
+    ["1","乳酸菌はグラム（　）性菌である","陽","正解：陽\n授業プリントにあります。"],
+    ["1","病原細菌のほとんどは他からの（　　　）を酵素の働きで\n科学的に分解し、その過程でエネルギーを得ている","有機物","正解：有機物\n授業プリントにあります。"],
+    ["1","有機物より得られたエネルギーは（　　　　　　　　　）やアデノシン二リン酸の中の\n高エネルギーリン酸結合という形で菌体内に貯蓄される","アデノシン三リン酸","正解：アデノシン三リン酸\n授業プリントにあります。"],
+    ["1","有機物より得られたエネルギーはアデノシン三リン酸や（　　　　　　　　　）の中の\n高エネルギーリン酸結合という形で菌体内に貯蓄される","アデノシン二リン酸","正解：アデノシン二リン酸\n授業プリントにあります。"],
+    ["1","細菌エネルギー生成はヒトの細胞と同様に主に（　　　）の分解によって行われる","二分裂","正解：二分裂\n授業プリントにあります。"],
+    ["1","分解の過程の第一段階は酸素がない状態で行われる（　　）である","発酵","正解：発酵\n授業プリントにあります。"],
+    ["1","分解の過程の第二段階には酸素を利用したエネルギー代謝である\n（　　）と酸素を利用しない発酵とがある","呼吸","正解：呼吸\n授業プリントにあります。"],
+    ["1","分解の過程の第二段階には酸素を利用したエネルギー代謝である\n呼吸と酸素を利用しない（　　）とがある","発酵","正解：発酵\n授業プリントにあります。"],
+    ["1","一般に細菌は（　　）の高い環境を好む","湿度","正解：湿度\n授業プリントにあります。"],
+    ["1","一般に細菌は（　　）を嫌う","乾燥","正解：乾燥\n授業プリントにあります。"],
+    ["1","細菌が初域を維持できる温度域の中でもっと育成に適した温度を\n（　　　　　　）という","至適発育温度","正解：至適発育温度\n授業プリントにあります。"],
+    ["1","酸素がなくても発育できる細菌を（　　　　　　）という","通性嫌気性菌","正解：通性嫌気性菌\n授業プリントにあります。"],
+    ["1","大気中や嫌気条件では発育せず、微量の酸素下でのみ\n発育する細菌を（　　　　　）という","微好気性菌","正解：微好気性菌\n授業プリントにあります。"],
+    ["1","ナイセリア族のうち、医学的に重要なのは（　　）と髄膜炎菌である","淋菌","正解：淋菌\n授業プリントにあります"],
+    ["1","ナイセリア族のうち、医学的に重要なのは淋菌と（　　　　）である","髄膜炎菌","正解：髄膜炎菌\n授業プリントにあります"],
+    ["1","淋菌と髄膜炎菌はどちらも（　　　　　　　　）で人にのみ寄生し、患者・保菌者が感染源となる","通性細胞内寄生菌","正解：通性細胞内寄生菌\n授業プリントにあります"],
+    ["1","淋菌と髄膜炎菌はどちらも通性細胞内寄生菌で（　）にのみ寄生し、患者・保菌者が感染源となる","人","正解：人\n授業プリントにあります"],
+    ["1","（　　　　）性大腸菌は乳幼児や成人にサルモネラ腸炎に似た急性腸炎や食中毒を起こす大腸菌である","腸管病原","正解：腸管病原\n授業プリントにあります"],
+    ["1","（　　　　　）性大腸菌は衛生状態の悪い国に旅行した際に起こる旅行者下痢症の最も重要な原因菌であり、コレラのような下痢を起こす","腸管毒素原","正解：腸管毒素原\n授業プリントにあります"],
+    ["1","（　　　　　　）性大腸菌は赤痢菌のように大腸粘膜上皮細胞に侵入し、赤痢に似た症状を起こす","腸管組織侵入","正解：腸管組織侵入\n授業プリントにあります"],
+    ["1","腸管出血性大腸菌は主に大腸に感染し（　　）毒素を産生する","ベロ","正解：ベロ\n授業プリントにあります"],
+    ["1","赤痢菌のうち（　　　　　）は神経細胞毒性をゆうsる外毒素を産生し、重症になりやすい","志賀赤痢菌","正解：志賀赤痢菌\n授業プリントにあります"],
+    ["1","チフス菌とパラチフスＡ菌は（　　　　　）属の細菌である","サルモネラ","正解：サルモネラ\n授業プリントにあります"],
+    ["1","腸炎ビブリオは（　　）性で海や河口あたりに生息し、夏になって海水温が上昇すると増殖して魚介類を汚染する","好塩性","正解：好塩性\n授業プリントにあります"],
+    ["1","腸炎ビブリオは好塩性で海や河口あたりに生息し、夏になって海水温が上昇すると増殖して（　　　）を汚染する","魚介類","正解：魚介類\n授業プリントにあります"],
+    ["1","炭疽菌は通常、草食動物が（　　）のついた草や資料を食べることによって感染する","芽胞","正解：芽胞\n授業プリントにあります"],
+    ["1","リステリア菌は通性細胞内寄生体で感染すると（　　　　　　）の中で増殖する","マクロファージ","正解：マクロファージ\n授業プリントにあります"],
+    ["1","デーデルライン杆菌は（　　）を産生するので膣内が酸性になり、外界から病原菌が侵入・定着しにくくなる","乳酸","正解：乳酸\n授業プリントにあります"],
+    ["1","デーデルライン杆菌は乳酸を産生するので膣内が酸性になり、外界から（　　　）が侵入・定着しにくくなる","病原菌","正解：病原菌\n授業プリントにあります"],
+    ["1","結核菌の感染源は排菌している（　　　）患者で主に飛沫・飛沫核・塵埃感染で気道から体内に侵入する","肺結核","正解：肺結核\n授業プリントにあります"],
+    ["1","結核菌の感染源は排菌している肺結核患者で主に（　　）・飛沫核・塵埃感染で気道から体内に侵入する","飛沫","正解：飛沫\n授業プリントにあります"],
+    ["1","結核菌の感染源は排菌している肺結核患者で主に飛沫・（　　　）・塵埃感染で気道から体内に侵入する","飛沫核","正解：飛沫核\n授業プリントにあります"],
+    ["1","結核菌の感染源は排菌している肺結核患者で主に飛沫・飛沫核・（　　）感染で気道から体内に侵入する","塵埃","正解：塵埃\n授業プリントにあります"],
+    ["1","カンピロバクター・ジュジュニは家畜などの（　　）に生息し、その糞便に汚染された飲食物から経口感染する","腸管","正解：腸管\n授業プリントにあります"],
+    ["1","カンピロバクター・ジュジュニは家畜などの腸管に生息し、その糞便に汚染された飲食物から（　　）感染する","経口","正解：経口\n授業プリントにあります"],
+    ["1","（　）毒素はグラム陽性菌・陰性菌の細胞内で作られて筋体外に分泌されるタンパク質である","外","正解：外\nプリントにあります"],
+    ["1","（　）毒素はグラム陽性菌の細胞壁に存在し、菌体が壊されたt気に放出される","内","正解：内\nプリントにあります"],
+    ["1","理想的な化学療法薬剤は病原体だけに選択的に強力な毒性を示し、人には全く毒性がない物質である。このような働きを(　　　　）という","選択毒性","正解：選択毒性\nプリントにあります"],
+    ["1","ヒト細胞には細胞壁はないので細胞合成阻害薬は最も優れた（　　　　）を発揮する","選択毒性","正解：選択毒性\nプリントにあります"],
+    ["1","（　　　）症は生体内の常在菌叢のうち薬剤に感受性のある菌が死滅し、代わりに抵抗性の微生物が異常増殖して病原性を発揮するようになる状態である","菌抗体","正解：菌抗体"],
+    ["1","βラクタン系薬はその構造に含まれるβラクタム感が最近細胞壁の骨格である（　　　　　　　　）の合成を阻害する","ペプチドグリカン","正解：ペプチドグリカン"],
+    ["1","メチシリン耐性ブドウ球菌の抗菌薬に対する耐性機構はメチシリンの作用点である（　　　　　）結合タンパクPBPの一部が変化し、薬剤が使用できなくなった新たな酵素を持つことによる","ペニシリン","正解：ペニシリン\nプリントにあります"],
+    ["1","黄色ブドウ球菌の一部の菌株が生産する（　　　　　　　　　）は耐熱性の毒素であり、食中毒に関連する","エンテロトキシン","正解：エンテロトキシン\nプリントにあります"],
+    ["1","真菌は(　　）、酵母やキノコ類の総称である","カビ","正解：カビ\nプリントにあります"],
+    ["1","真菌はカビ、（　　）やキノコ類の総称である","酵母","正解：酵母\nプリントにあります"],
+    ["1","真菌はカビ、酵母や（　　　　）の総称である","キノコ類","正解：キノコ類\nプリントにあります"],
+    ["1","真菌の形状のうち、（　　　　　）は卵円形またはだ塩基の単細胞である","酵母用細胞","正解：酵母用細胞\nプリントにあります"],
+    ["1","真菌の形状のうち多価細胞体で管のような形をしているのは（　　）である","菌糸","正解：菌糸\nプリントにあります"],
+    ["1","真菌は生殖のため特殊な細胞として（　　）が作られる","胞子","正解：胞子\nプリントにあります"],
+    ["1","真菌の増殖にはPh（　　　）の酸性環境が適している","5～6","正解：5～6\nプリントにあります"],
+    ["1","真菌の大多数は偏性（　　）性である","好気","正解：好気\nプリントにあります"],
+    ["1","圧膜胞子を形成する二形成真菌を（　　　　　　　　　　）という","カンジダ・アルビカンス","正解：カンジダ・アルビカンス\nプリントにあります"],
+    ["1","鳥の糞に多数存在する真菌は（　　　　　　　　　　　　　　　　　　）である","クリプトコッカス・ネオフォルマンス","正解：クリプトコッカス・ネオフォルマンス\nプリントにあります"],
+    ["1","アフラトキシンを生成する真菌は（　　　　　　　　　　　　）である","アスペルギルス・フラバス","正解：アスペルギルス・フラバス\nプリントにあります"],
+    ["1","エイズ患者の合併症に多い真菌は（　　　　　　　　　　　　）である","ニューモシスチス・イロベシイ","正解：ニューモシスチス・イロベシイ\nプリントにあります"],
+    ["1","白癬患者から分離される頻度が多い真菌は（　　　　　　　　　　　）である","トリコフィトン・ルブルム","正解：トリコフィトン・ルブルム\nプリントにあります"],
+    ["2","口から入った病原体が消化器を通じて感染する場合を何感染というか","経口","経皮","経気道","経管","正解：経口\nプリントにあります"],
+["2","大腸菌はどのような形の菌か","桿菌","球菌","らせん菌","ウイルス","正解：桿菌\nプリントにあります"],
+["2","カンピロバクターはどのような形の菌か","らせん菌","球菌","桿菌","ウイルス","正解：らせん菌\nプリントにあります"],
+["2","緑膿菌は以下のうちどれに分類される","偏性好気性菌","偏性嫌気性菌","通性嫌気性菌","通性好気性菌","正解：偏性好気性菌\nプリントにあります"],
+["2","破傷風菌は以下のうちどれに分類されるか","偏性嫌気性菌","通性嫌気性菌","通性好気性菌","偏性好気性菌","正解：偏性嫌気性菌\nプリントにあります"],
+["2","腸管出血性大腸菌は何の動物が持っている糞便中に菌に汚染された飲食物を介して経口感染するか","牛","鶏","豚","羊","正解：牛\nプリントにあります"],
+["2","ほかのグラム陰性桿菌に比べて消毒薬に抵抗し、消毒、滅菌が不完全な理念や医療器具などを介しても感染する菌はどれか","緑膿菌","大腸菌","腸炎ビブリオ","インフルエンザ菌","正解：緑膿菌\nプリントにあります"],
+["2","世界各地で発生し日本でも空調設備の冷却水、加湿器や噴水の水、温泉施設や循環濾過式浴槽からの感染がある菌を何というか","レジオネラ","リステリア","バスツレラ","プルレラ","正解：レジオネラ\nプリントにあります"],
+["2","一般に激しい下痢（米とぎ汁様）と嘔吐を主症状とし、発熱、血便、腹痛は起こらないことが多い菌はどれか","コレラ","腸チフス","細菌性赤痢","腸管出血性大腸菌感染症","正解：コレラ\nプリントにあります"],
+["2","好塩性で温かい海水中や河口付近に生息して魚介類を汚染する菌はどれか","腸炎ビブリオ","大腸菌","コレラ","腸チフス","正解：腸炎ビブリオ\nプリントにあります"],
+["2","タンパク質合成機能が存在しないのはどれか","ウイルス","リケッチア","クラミジア","細菌","正解：ウイルス\nプリントにあります"],
+["2","流行性耳下腺炎の病原体はどれか","ムンプスウイルス","ヒトアデノウイルス","ポリオウイルス","インフルエンザウイルス","正解：ムンプスウイルス\nプリントにあります"],
+["2","A群とB群に分類され、A群ウイルスはヘルパンギーナ、手足口病などを起こし、B群ウイルスは心筋炎、心膜炎、流行性筋痛症などを起こすウイルスはどれか","コクサッキーウイルス","ヒトパピローマウイルス","ヒトアデノウイルス","新型コロナウイルス","正解：コクサッキーウイルス\nプリントにあります"],
+["2","ヒト回虫の成虫はどこに寄生するか","小腸","盲腸","皮膚","リンパ管","正解：小腸\nプリントにあります"],
+["2","マラリアは何という蚊によって人から人へと媒介される熱病か","ハマダラカ","ネッタイシマカ","ヒトスジシマカ","コガタアカイエカ","正解：ハマダラカ\nプリントにあります"],
+["2","口から入った病原体が消化器を通じて感染する場合を何感染というか","経口","経皮","経気道","経管","正解：経口\nプリントにあります"],
+["2","大腸菌はどのような形の菌か","桿菌","球菌","らせん菌","ウイルス","正解：桿菌\nプリントにあります"],
+["2","カンピロバクターはどのような形の菌か","らせん菌","球菌","桿菌","ウイルス","正解：らせん菌\nプリントにあります"],
+["2","緑膿菌は以下のうちどれに分類される","偏性好気性菌","偏性嫌気性菌","通性嫌気性菌","通性好気性菌","正解：偏性好気性菌\nプリントにあります"],
+["2","破傷風菌は以下のうちどれに分類されるか","偏性嫌気性菌","通性嫌気性菌","通性好気性菌","偏性好気性菌","正解：偏性嫌気性菌\nプリントにあります"],
+["2","腸管出血性大腸菌は何の動物が持っている糞便中に菌に汚染された飲食物を介して経口感染するか","牛","鶏","豚","羊","正解：牛\nプリントにあります"],
+["2","ほかのグラム陰性桿菌に比べて消毒薬に抵抗し、消毒、滅菌が不完全な理念や医療器具などを介しても感染する菌はどれか","緑膿菌","大腸菌","腸炎ビブリオ","インフルエンザ菌","正解：緑膿菌\nプリントにあります"],
+["2","世界各地で発生し日本でも空調設備の冷却水、加湿器や噴水の水、温泉施設や循環濾過式浴槽からの感染がある菌を何というか","レジオネラ","リステリア","バスツレラ","プルレラ","正解：レジオネラ\nプリントにあります"],
+["2","一般に激しい下痢（米とぎ汁様）と嘔吐を主症状とし、発熱、血便、腹痛は起こらないことが多い菌はどれか","コレラ","腸チフス","細菌性赤痢","腸管出血性大腸菌感染症","正解：コレラ\nプリントにあります"],
+["2","好塩性で温かい海水中や河口付近に生息して魚介類を汚染する菌はどれか","腸炎ビブリオ","大腸菌","コレラ","腸チフス","正解：腸炎ビブリオ\nプリントにあります"],
+["2","タンパク質合成機能が存在しないのはどれか","ウイルス","リケッチア","クラミジア","細菌","正解：ウイルス\nプリントにあります"],
+["2","流行性耳下腺炎の病原体はどれか","ムンプスウイルス","ヒトアデノウイルス","ポリオウイルス","インフルエンザウイルス","正解：ムンプスウイルス\nプリントにあります"],
+["2","A群とB群に分類され、A群ウイルスはヘルパンギーナ、手足口病などを起こし、B群ウイルスは心筋炎、心膜炎、流行性筋痛症などを起こすウイルスはどれか","コクサッキーウイルス","ヒトパピローマウイルス","ヒトアデノウイルス","新型コロナウイルス","正解：コクサッキーウイルス\nプリントにあります"],
+["2","ヒト回虫の成虫はどこに寄生するか","小腸","盲腸","皮膚","リンパ管","正解：小腸\nプリントにあります"],
+["2","マラリアは何という蚊によって人から人へと媒介される熱病か","ハマダラカ","ネッタイシマカ","ヒトスジシマカ","コガタアカイエカ","正解：ハマダラカ\nプリントにあります"],
+["2","口から入った病原体が消化器を通じて感染する場合を何感染というか","経口","経皮","経気道","経管","正解：経口\nプリントにあります"],
+["2","大腸菌はどのような形の菌か","桿菌","球菌","らせん菌","ウイルス","正解：桿菌\nプリントにあります"],
+["2","カンピロバクターはどのような形の菌か","らせん菌","球菌","桿菌","ウイルス","正解：らせん菌\nプリントにあります"],
+["2","緑膿菌は以下のうちどれに分類される","偏性好気性菌","偏性嫌気性菌","通性嫌気性菌","通性好気性菌","正解：偏性好気性菌\nプリントにあります"],
+["2","破傷風菌は以下のうちどれに分類されるか","偏性嫌気性菌","通性嫌気性菌","通性好気性菌","偏性好気性菌","正解：偏性嫌気性菌\nプリントにあります"],
+["2","腸管出血性大腸菌は何の動物が持っている糞便中に菌に汚染された飲食物を介して経口感染するか","牛","鶏","豚","羊","正解：牛\nプリントにあります"],
+["2","ほかのグラム陰性桿菌に比べて消毒薬に抵抗し、消毒、滅菌が不完全な理念や医療器具などを介しても感染する菌はどれか","緑膿菌","大腸菌","腸炎ビブリオ","インフルエンザ菌","正解：緑膿菌\nプリントにあります"],
+["2","世界各地で発生し日本でも空調設備の冷却水、加湿器や噴水の水、温泉施設や循環濾過式浴槽からの感染がある菌を何というか","レジオネラ","リステリア","バスツレラ","プルレラ","正解：レジオネラ\nプリントにあります"],
+["2","一般に激しい下痢（米とぎ汁様）と嘔吐を主症状とし、発熱、血便、腹痛は起こらないことが多い菌はどれか","コレラ","腸チフス","細菌性赤痢","腸管出血性大腸菌感染症","正解：コレラ\nプリントにあります"],
+["2","好塩性で温かい海水中や河口付近に生息して魚介類を汚染する菌はどれか","腸炎ビブリオ","大腸菌","コレラ","腸チフス","正解：腸炎ビブリオ\nプリントにあります"],
+["2","タンパク質合成機能が存在しないのはどれか","ウイルス","リケッチア","クラミジア","細菌","正解：ウイルス\nプリントにあります"],
+["2","流行性耳下腺炎の病原体はどれか","ムンプスウイルス","ヒトアデノウイルス","ポリオウイルス","インフルエンザウイルス","正解：ムンプスウイルス\nプリントにあります"],
+["2","A群とB群に分類され、A群ウイルスはヘルパンギーナ、手足口病などを起こし、B群ウイルスは心筋炎、心膜炎、流行性筋痛症などを起こすウイルスはどれか","コクサッキーウイルス","ヒトパピローマウイルス","ヒトアデノウイルス","新型コロナウイルス","正解：コクサッキーウイルス\nプリントにあります"],
+["2","ヒト回虫の成虫はどこに寄生するか","小腸","盲腸","皮膚","リンパ管","正解：小腸\nプリントにあります"],
+["2","マラリアは何という蚊によって人から人へと媒介される熱病か","ハマダラカ","ネッタイシマカ","ヒトスジシマカ","コガタアカイエカ","正解：ハマダラカ\nプリントにあります"],
+    
+];
+
+// ===================== アプリ状態 =====================
+let questions = [];
+let currentIdx = 0;
+let score = 0;
+let total = 0;
+let answered = false;
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function goToCount() {
+  document.getElementById('total-label').textContent = `全 ${monndai.length} 問から出題`;
+  showScreen('count-screen');
+  document.getElementById('count-input').focus();
+}
+
+function startQuiz() {
+  const val = parseInt(document.getElementById('count-input').value);
+  if (!val || val < 1) {
+    alert('1以上の数字を入力してください。');
+    return;
+  }
+  total = Math.min(val, monndai.length);
+  score = 0;
+  currentIdx = 0;
+  answered = false;
+  questions = shuffle([...monndai]).slice(0, total);
+  showScreen('quiz-screen');
+  renderQuestion();
+}
+
+function renderQuestion() {
+  answered = false;
+  const q = questions[currentIdx];
+  const type = q[0];
+
+  // progress
+  const pct = (currentIdx / total) * 100;
+  document.getElementById('prog-fill').style.width = pct + '%';
+  document.getElementById('prog-label').textContent = `${currentIdx + 1} / ${total}`;
+
+  // badge
+  const badge = document.getElementById('qtype-badge');
+  const typeMap = {'1':'穴埋め問題','2':'4択問題','3':'〇✕問題','5':'2択問題'};
+  badge.textContent = typeMap[type] || '問題';
+  badge.className = `qtype-badge qtype-${type}`;
+
+  // question
+  document.getElementById('question-text').textContent = `第${currentIdx+1}問　${q[1]}`;
+
+  // hide explanation
+  const expEl = document.getElementById('explanation');
+  expEl.classList.remove('visible');
+  document.getElementById('btn-next').classList.remove('visible');
+
+  const area = document.getElementById('answer-area');
+  area.innerHTML = '';
+
+  if (type === '2') {
+    // 4択
+    const choices = shuffle([q[2], q[3], q[4], q[5]]);
+    const div = document.createElement('div');
+    div.className = 'choices';
+    choices.forEach(c => {
+      const btn = document.createElement('button');
+      btn.className = 'choice-btn';
+      btn.textContent = c;
+      btn.onclick = () => judgeType2(btn, c, q[2], q, div);
+      div.appendChild(btn);
+    });
+    area.appendChild(div);
+  } else if (type === '3') {
+    // 〇✕
+    const correctBtn = q[2]; // "b1"=〇 "b2"=✕
+    const row = document.createElement('div');
+    row.className = 'tf-row';
+    const maru = document.createElement('button');
+    maru.className = 'tf-btn'; maru.textContent = '〇';
+    maru.onclick = () => judgeType3(maru, 'b1', correctBtn, q, row);
+    const batsu = document.createElement('button');
+    batsu.className = 'tf-btn'; batsu.textContent = '✕';
+    batsu.onclick = () => judgeType3(batsu, 'b2', correctBtn, q, row);
+    row.appendChild(maru); row.appendChild(batsu);
+    area.appendChild(row);
+  } else if (type === '1') {
+    // 穴埋め
+    const row = document.createElement('div');
+    row.className = 'fill-row';
+    const input = document.createElement('input');
+    input.className = 'fill-input'; input.type = 'text';
+    input.placeholder = '回答を入力…';
+    input.onkeydown = (e) => { if (e.key === 'Enter') judgeType1(input, q); };
+    const btn = document.createElement('button');
+    btn.className = 'btn-submit'; btn.textContent = '回答する';
+    btn.onclick = () => judgeType1(input, q);
+    row.appendChild(input); row.appendChild(btn);
+    area.appendChild(row);
+    setTimeout(() => input.focus(), 50);
+  } else if (type === '5') {
+    // 2択
+    const choices = shuffle([
+      {label: q[2], val: '2'},
+      {label: q[3], val: '3'}
+    ]);
+    const div = document.createElement('div');
+    div.className = 'choices';
+    choices.forEach(c => {
+      const btn = document.createElement('button');
+      btn.className = 'choice-btn';
+      btn.textContent = c.label;
+      btn.onclick = () => judgeType5(btn, c.val, q, div);
+      div.appendChild(btn);
+    });
+    area.appendChild(div);
+  }
+}
+
+function showExplanation(isCorrect, explanationText) {
+  answered = true;
+  const expEl = document.getElementById('explanation');
+  const lbl = document.getElementById('result-label');
+  lbl.textContent = isCorrect ? '正解！🎉' : '不正解…';
+  lbl.className = 'result-label ' + (isCorrect ? 'correct' : 'wrong');
+  document.getElementById('explanation-text').textContent = explanationText;
+  expEl.classList.add('visible');
+  document.getElementById('btn-next').classList.add('visible');
+  expEl.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+function judgeType2(clickedBtn, selected, correct, q, container) {
+  if (answered) return;
+  const isCorrect = selected === correct;
+  if (isCorrect) score++;
+  container.querySelectorAll('.choice-btn').forEach(b => {
+    b.disabled = true;
+    if (b.textContent === correct) b.classList.add('correct');
+    else if (b === clickedBtn && !isCorrect) b.classList.add('wrong');
+  });
+  showExplanation(isCorrect, q[6]);
+}
+
+function judgeType3(clickedBtn, selected, correct, q, container) {
+  if (answered) return;
+  const isCorrect = selected === correct;
+  if (isCorrect) score++;
+  // find explanation: it can be at index 3 or 5 depending on data format
+  const expl = q[3] || q[5] || '';
+  container.querySelectorAll('.tf-btn').forEach(b => {
+    b.disabled = true;
+    const isCircle = b.textContent === '〇';
+    const btnKey = isCircle ? 'b1' : 'b2';
+    if (btnKey === correct) b.classList.add('correct');
+    else if (b === clickedBtn && !isCorrect) b.classList.add('wrong');
+  });
+  showExplanation(isCorrect, expl);
+}
+
+function judgeType1(input, q) {
+  if (answered) return;
+  const userAns = input.value.trim();
+  if (!userAns) return;
+  // Use flexible matching (normalize)
+  const normalize = s => s.replace(/\s/g,'').toLowerCase();
+  const isCorrect = normalize(userAns) === normalize(q[2]);
+  if (isCorrect) score++;
+  input.disabled = true;
+  input.classList.add(isCorrect ? 'correct' : 'wrong');
+  input.nextElementSibling.disabled = true;
+  showExplanation(isCorrect, q[3]);
+}
+
+function judgeType5(clickedBtn, selected, q, container) {
+  if (answered) return;
+  const isCorrect = selected === '2'; // index 2 is correct choice
+  if (isCorrect) score++;
+  container.querySelectorAll('.choice-btn').forEach(b => {
+    b.disabled = true;
+    if (b.textContent === q[2]) b.classList.add('correct');
+    else if (b === clickedBtn && !isCorrect) b.classList.add('wrong');
+  });
+  showExplanation(isCorrect, q[4]);
+}
+
+function nextQuestion() {
+  currentIdx++;
+  if (currentIdx >= total) {
+    showResult();
+  } else {
+    renderQuestion();
+    document.getElementById('quiz-card').scrollIntoView({behavior:'smooth', block:'start'});
+  }
+}
+
+function showResult() {
+  const pct = Math.round((score / total) * 100);
+  document.getElementById('score-num').textContent = pct;
+  document.getElementById('score-denom').textContent = `/ 100点`;
+  document.getElementById('prog-fill').style.width = '100%';
+
+  let hyouka, sub;
+  if (pct === 100) { hyouka = '満点合格おめでとう！！🎊'; sub = '完璧です！素晴らしい！'; }
+  else if (pct >= 80) { hyouka = 'おしい！あと少しで満点！'; sub = `正解数: ${score} / ${total}`; }
+  else if (pct >= 60) { hyouka = '合格おめでとう！！'; sub = `正解数: ${score} / ${total}`; }
+  else if (pct >= 50) { hyouka = '惜しい！もう少しで合格！'; sub = 'もう一回チャレンジしてね！'; }
+  else if (pct <= 10) { hyouka = '本当に勉強してる!？😅'; sub = '頑張れ！'; }
+  else { hyouka = '勉強してからもう一度！'; sub = `正解数: ${score} / ${total}`; }
+
+  document.getElementById('hyouka-text').textContent = hyouka;
+  document.getElementById('hyouka-sub').textContent = sub;
+  showScreen('result-screen');
+}
+
+function restart() {
+  document.getElementById('count-input').value = '';
+  showScreen('count-screen');
+  document.getElementById('count-input').focus();
+}
+</script>
+</body>
+</html>
