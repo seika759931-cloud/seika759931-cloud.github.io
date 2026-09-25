@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>乳腺腎疾患 クイズ</title>
+<style>
+  :root {
+    --bg: #f0f4f8;
+    --card: #ffffff;
+    --primary: #2c6fad;
+    --primary-dark: #1a4f80;
+    --accent: #e05577;
+    --correct: #27ae60;
+    --wrong: #e74c3c;
+    --text: #1a2533;
+    --muted: #6b7c93;
+    --border: #d0dce8;
+    --yellow: #fff591;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  /* ===== SCREENS ===== */
+  .screen { display: none; width: 100%; max-width: 700px; }
+  .screen.active { display: flex; flex-direction: column; align-items: center; }
+
+  /* ===== HOME ===== */
+  #home-screen {
+    text-align: center;
+    gap: 28px;
+  }
+  .home-title {
+    font-size: 3.5rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    color: var(--primary);
+    line-height: 1;
+  }
+  .home-subtitle {
+    font-size: 1rem;
+    color: var(--muted);
+    margin-top: -10px;
+  }
+  .home-badge {
+    display: inline-block;
+    background: var(--primary);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    padding: 4px 12px;
+    border-radius: 20px;
+    text-transform: uppercase;
+  }
+
+  /* ===== COUNT SCREEN ===== */
+  #count-screen { gap: 24px; }
+  .count-card {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 36px 40px;
+    box-shadow: 0 4px 20px rgba(44,111,173,0.10);
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .count-card h2 { font-size: 1.4rem; color: var(--primary); }
+  .count-card p { font-size: 0.9rem; color: var(--muted); }
+  .count-input {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 1.3rem;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    outline: none;
+    text-align: center;
+    transition: border-color 0.2s;
+  }
+  .count-input:focus { border-color: var(--primary); }
+  .total-count { color: var(--muted); font-size: 0.85rem; text-align: right; }
+
+  /* ===== QUIZ SCREEN ===== */
+  #quiz-screen { gap: 20px; width: 100%; max-width: 760px; }
+  .progress-bar-wrap {
+    width: 100%;
+    background: var(--border);
+    border-radius: 99px;
+    height: 8px;
+  }
+  .progress-bar-fill {
+    height: 8px;
+    background: linear-gradient(90deg, var(--primary), #5ba4d9);
+    border-radius: 99px;
+    transition: width 0.4s ease;
+  }
+  .progress-label {
+    font-size: 0.8rem;
+    color: var(--muted);
+    width: 100%;
+    text-align: right;
+  }
+  .quiz-card {
+    background: var(--card);
+    border-radius: 18px;
+    padding: 36px 40px;
+    box-shadow: 0 4px 24px rgba(44,111,173,0.10);
+    width: 100%;
+  }
+  .qtype-badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-bottom: 16px;
+    text-transform: uppercase;
+  }
+  .qtype-1 { background: #e8f4fd; color: #2c6fad; }
+  .qtype-2 { background: #edf9f0; color: #27ae60; }
+  .qtype-3 { background: #fef3cd; color: #c07c00; }
+  .qtype-5 { background: #f3e8fd; color: #7b2dad; }
+  .question-text {
+    font-size: 1.15rem;
+    line-height: 1.7;
+    font-weight: 600;
+    margin-bottom: 28px;
+    color: var(--text);
+  }
+
+  /* choices */
+  .choices { display: flex; flex-direction: column; gap: 10px; }
+  .choice-btn {
+    display: block;
+    width: 100%;
+    padding: 14px 20px;
+    background: #f6f9fc;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    font-size: 1rem;
+    font-family: inherit;
+    color: var(--text);
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.15s;
+  }
+  .choice-btn:hover:not(:disabled) {
+    background: #e8f2fc;
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+  .choice-btn.correct { background: #d4f5e2; border-color: var(--correct); color: #1a6e3e; font-weight: 700; }
+  .choice-btn.wrong   { background: #fde8e8; border-color: var(--wrong);   color: #8b1a1a; }
+  .choice-btn:disabled { cursor: default; }
+
+  /* true/false */
+  .tf-row { display: flex; gap: 16px; justify-content: center; margin-top: 8px; }
+  .tf-btn {
+    width: 140px;
+    height: 80px;
+    font-size: 2rem;
+    border: 2px solid var(--border);
+    border-radius: 14px;
+    background: #f6f9fc;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .tf-btn:hover:not(:disabled) { background: #e8f2fc; border-color: var(--primary); }
+  .tf-btn.correct { background: #d4f5e2; border-color: var(--correct); }
+  .tf-btn.wrong   { background: #fde8e8; border-color: var(--wrong); }
+  .tf-btn:disabled { cursor: default; }
+
+  /* fill-in */
+  .fill-row { display: flex; gap: 10px; align-items: center; }
+  .fill-input {
+    flex: 1;
+    padding: 12px 16px;
+    font-size: 1.1rem;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    outline: none;
+    font-family: inherit;
+    transition: border-color 0.2s;
+  }
+  .fill-input:focus { border-color: var(--primary); }
+  .fill-input.correct { border-color: var(--correct); background: #d4f5e2; }
+  .fill-input.wrong   { border-color: var(--wrong);   background: #fde8e8; }
+
+  /* ===== EXPLANATION ===== */
+  .explanation {
+    display: none;
+    margin-top: 20px;
+    padding: 20px 24px;
+    border-radius: 12px;
+    background: var(--yellow);
+    border-left: 5px solid var(--accent);
+    font-size: 0.95rem;
+    line-height: 1.7;
+    white-space: pre-line;
+  }
+  .explanation.visible { display: block; }
+  .result-label {
+    font-size: 1.4rem;
+    font-weight: 800;
+    margin-bottom: 8px;
+  }
+  .result-label.correct { color: var(--correct); }
+  .result-label.wrong   { color: var(--wrong); }
+
+  /* ===== RESULT SCREEN ===== */
+  #result-screen { gap: 24px; text-align: center; }
+  .result-card {
+    background: var(--card);
+    border-radius: 18px;
+    padding: 48px 40px;
+    box-shadow: 0 4px 24px rgba(44,111,173,0.10);
+    width: 100%;
+  }
+  .score-circle {
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), #5ba4d9);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 24px;
+    box-shadow: 0 8px 30px rgba(44,111,173,0.3);
+  }
+  .score-num { font-size: 3rem; font-weight: 900; line-height: 1; }
+  .score-denom { font-size: 1rem; opacity: 0.8; }
+  .hyouka-text { font-size: 1.5rem; font-weight: 700; margin-bottom: 8px; color: var(--primary); }
+  .hyouka-sub  { font-size: 0.9rem; color: var(--muted); }
+
+  /* ===== BUTTONS ===== */
+  .btn-primary {
+    padding: 16px 48px;
+    font-size: 1.15rem;
+    font-weight: 700;
+    font-family: inherit;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    box-shadow: 0 4px 16px rgba(44,111,173,0.25);
+  }
+  .btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-next {
+    margin-top: 20px;
+    padding: 12px 36px;
+    font-size: 1rem;
+    font-weight: 700;
+    font-family: inherit;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s;
+    display: none;
+  }
+  .btn-next.visible { display: inline-block; }
+  .btn-next:hover { background: #c03060; }
+  .btn-submit {
+    padding: 12px 32px;
+    font-size: 1rem;
+    font-weight: 700;
+    font-family: inherit;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s;
+    white-space: nowrap;
+  }
+  .btn-submit:hover { background: var(--primary-dark); }
+  .btn-submit:disabled { background: var(--border); cursor: default; }
+</style>
+</head>
+<body>
+
+<!-- HOME -->
+<div id="home-screen" class="screen active">
+  <span class="home-badge">医療系国試対策</span>
+  <h1 class="home-title">乳腺外科、腎疾患</h1>
+  <p class="home-subtitle">ランダム出題クイズ</p>
+  <button class="btn-primary" onclick="goToCount()">スタート</button>
+</div>
+
+<!-- COUNT -->
+<div id="count-screen" class="screen">
+  <div class="count-card">
+    <h2>問題数を選んでください</h2>
+    <input class="count-input" type="number" id="count-input" min="1" placeholder="例: 10"
+      onkeydown="if(event.key==='Enter') startQuiz()">
+    <p class="total-count" id="total-label"></p>
+    <p>数字を入力してください（英数字は半角で）</p>
+    <button class="btn-primary" onclick="startQuiz()">問題へ</button>
+  </div>
+</div>
+
+<!-- QUIZ -->
+<div id="quiz-screen" class="screen">
+  <div class="progress-bar-wrap">
+    <div class="progress-bar-fill" id="prog-fill" style="width:0%"></div>
+  </div>
+  <div class="progress-label" id="prog-label">0 / 0</div>
+  <div class="quiz-card" id="quiz-card">
+    <span class="qtype-badge" id="qtype-badge"></span>
+    <div class="question-text" id="question-text"></div>
+    <div id="answer-area"></div>
+    <div class="explanation" id="explanation">
+      <div class="result-label" id="result-label"></div>
+      <div id="explanation-text"></div>
+    </div>
+    <div style="text-align:right">
+      <button class="btn-next" id="btn-next" onclick="nextQuestion()">次の問題 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- RESULT -->
+<div id="result-screen" class="screen">
+  <div class="result-card">
+    <div class="score-circle">
+      <div class="score-num" id="score-num">0</div>
+      <div class="score-denom" id="score-denom">/ 0点</div>
+    </div>
+    <div class="hyouka-text" id="hyouka-text"></div>
+    <div class="hyouka-sub" id="hyouka-sub"></div>
+  </div>
+  <button class="btn-primary" onclick="restart()">もう一度挑戦</button>
+</div>
+
+<script>
+// ===================== 問題データ =====================
+const monndai = [
+   ["1","動脈とは（　　　　　　　　　　　　　）血管である","心臓から出て各臓器へ向かう","正解：心臓から出て各臓器へ向かう\nプリント参照"],
+    ["1","動脈、静脈、リンパ管の特徴として（　　）の血流は心臓の心室からの拍出力によって流れる。静脈とリンパ管には弁があり逆流しないようになっている","動脈","正解：動脈\nプリント参照"],
+    ["1","動脈、静脈、リンパ管の特徴として動脈の血流は心臓の心室からの拍出力によって流れる。（　　）とリンパ管には弁があり逆流しないようになっている","静脈","正解：静脈\nプリント参照"],
+    ["1","動脈、静脈、リンパ管の特徴として動脈の血流は心臓の心室からの拍出力によって流れる。静脈と（　　　　）には弁があり逆流しないようになっている","リンパ管","正解：リンパ管\nプリント参照"],
+    ["1","三大栄養素の吸収経路は\n①炭水化物は（　　　　）に分解されて小腸から門脈を通って肝臓に運ばれる。\n②たんぱく質はアミノ酸に分解されて小腸から門脈を通って肝臓へ運ばれる。\n③脂肪は脂肪酸とグリセリンに分解されリンパ管に吸収され胸管を通って鎖骨下静脈に流れる","ブドウ糖","正解：ブドウ糖\nプリント参照"],
+    ["1","三大栄養素の吸収経路は\n①炭水化物はブドウ糖に分解されて小腸から（　　）を通って肝臓に運ばれる。\n②たんぱく質はアミノ酸に分解されて小腸から門脈を通って肝臓へ運ばれる。\n③脂肪は脂肪酸とグリセリンに分解されリンパ管に吸収され胸管を通って鎖骨下静脈に流れる","門脈","正解：門脈\nプリント参照"],
+    ["1","三大栄養素の吸収経路は\n①炭水化物はブドウ糖に分解されて小腸から門脈を通って肝臓に運ばれる。\n②たんぱく質は（　　　　）に分解されて小腸から門脈を通って肝臓へ運ばれる。\n③脂肪は脂肪酸とグリセリンに分解されリンパ管に吸収され胸管を通って鎖骨下静脈に流れる","アミノ酸","正解：アミノ酸\nプリント参照"],
+    ["1","三大栄養素の吸収経路は\n①炭水化物はブドウ糖に分解されて小腸から門脈を通って肝臓に運ばれる。\n②たんぱく質はアミノ酸に分解されて小腸から（　　）を通って肝臓へ運ばれる。\n③脂肪は脂肪酸とグリセリンに分解されリンパ管に吸収され胸管を通って鎖骨下静脈に流れる","門脈","正解：門脈\nプリント参照"],
+    ["1","三大栄養素の吸収経路は\n①炭水化物はブドウ糖に分解されて小腸から門脈を通って肝臓に運ばれる。\n②たんぱく質はアミノ酸に分解されて小腸から門脈を通って肝臓へ運ばれる。\n③脂肪は（　　　）とグリセリンに分解されリンパ管に吸収され胸管を通って鎖骨下静脈に流れる","脂肪酸","正解：脂肪酸\nプリント参照"],
+    ["1","三大栄養素の吸収経路は\n①炭水化物はブドウ糖に分解されて小腸から門脈を通って肝臓に運ばれる。\n②たんぱく質はアミノ酸に分解されて小腸から門脈を通って肝臓へ運ばれる。\n③脂肪は脂肪酸と（　　　　　）に分解されリンパ管に吸収され胸管を通って鎖骨下静脈に流れる","グリセリン","正解：グリセリン\nプリント参照"],
+    ["1","三大栄養素の吸収経路は\n①炭水化物はブドウ糖に分解されて小腸から門脈を通って肝臓に運ばれる。\n②たんぱく質はアミノ酸に分解されて小腸から門脈を通って肝臓へ運ばれる。\n③脂肪は脂肪酸とグリセリンに分解され（　　　　）に吸収され胸管を通って鎖骨下静脈に流れる","リンパ管","正解：リンパ管\nプリント参照"],
+    ["1","三大栄養素の吸収経路は\n①炭水化物はブドウ糖に分解されて小腸から門脈を通って肝臓に運ばれる。\n②たんぱく質はアミノ酸に分解されて小腸から門脈を通って肝臓へ運ばれる。\n③脂肪は脂肪酸とグリセリンに分解されリンパ管に吸収され（　　）を通って鎖骨下静脈に流れる","胸管","正解：胸管\nプリント参照"],
+    ["1","採血をするときに、血液が固まらないようにするために抗凝固剤が使われる。末梢血検査の試験官には（　　　　）が入っている。凝固検査の試験官にはヘパリンが入っている。ともに、血液中のカルシウムの働きを阻害することで血液が固まらないようになっている","EDPA","正解：EDPA\nプリント参照"],
+    ["1","採血をするときに、血液が固まらないようにするために抗凝固剤が使われる。末梢血検査の試験官にはEDPAが入っている。凝固検査の試験官には（　　　　　）が入っている。ともに、血液中のカルシウムの働きを阻害することで血液が固まらないようになっている","ヘパリン","正解：ヘパリン\nプリント参照"],
+    ["1","採血をするときに、血液が固まらないようにするために抗凝固剤が使われる。末梢血検査の試験官にはEDPAが入っている。凝固検査の試験官にはヘパリンが入っている。ともに、血液中の（　　　　　　）の働きを阻害することで血液が固まらないようになっている","カルシウム","正解：カルシウム\nプリント参照"],
+    ["1","採血した試験官の中では糖が（　　　）によって消費されるため時間が経過すると血糖値は低下する。これを防ぐために血糖検査の試験官にはEDTAとフッ化ナトリウムが入っていて、血液が凝固せずされに等が消費されないようにする","赤血球","正解：赤血球\nプリント参照"],
+    ["1","採血した試験官の中では糖が赤血球によって消費されるため時間が経過すると血糖値は低下する。これを防ぐために血糖検査の試験官には（　　　　）とフッ化ナトリウムが入っていて、血液が凝固せずされに等が消費されないようにする","EDTA","正解：EDTA\nプリント参照"],
+    ["1","採血した試験官の中では糖が赤血球によって消費されるため時間が経過すると血糖値は低下する。これを防ぐために血糖検査の試験官にはEDTAと（　　　　　　　　）が入っていて、血液が凝固せずされに等が消費されないようにする","フッ化ナトリウム","正解：フッ化ナトリウム\nプリント参照"],
+    ["1","凝固した血液を放置したり延伸して得られる液体成分を（　　）という","血清","正解：血清\nプリント参照"],
+    ["1","抗凝固剤で固まらないようにして延伸したときの液体成分を（　　）という","血漿","正解：血漿\nプリント参照"],
+    ["1","赤血球寿命は（　　）日である","120","正解：120\nプリント参照"],
+    ["1","血小板寿命は（　　）日である","11","正解：11\nプリント参照"],
+    ["1","血液細胞はすべて（　　）の中で作られる。赤血球造血は腎臓で作られるホルモンエリスロポエチンで刺激される。腎臓の病気腎不全になるとこのホルモンが生成されないため腎性貧血になる","骨髄","正解：骨髄\nプリント参照"],
+    ["1","血液細胞はすべて骨髄の中で作られる。赤血球造血は（　　）で作られるホルモンエリスロポエチンで刺激される。腎臓の病気腎不全になるとこのホルモンが生成されないため腎性貧血になる","腎臓","正解：腎臓\nプリント参照"],
+    ["1","血液細胞はすべて骨髄の中で作られる。赤血球造血は腎臓で作られるホルモン（　　　　　　　　）で刺激される。腎臓の病気腎不全になるとこのホルモンが生成されないため腎性貧血になる","エリスロポエチン","正解：エリスロポエチン\nプリント参照"],
+    ["1","血液細胞はすべて骨髄の中で作られる。赤血球造血は腎臓で作られるホルモンエリスロポエチンで刺激される。腎臓の病気（　　　）になるとこのホルモンが生成されないため腎性貧血になる","腎不全","正解：腎不全\nプリント参照"],
+    ["1","血液細胞はすべて骨髄の中で作られる。赤血球造血は腎臓で作られるホルモンエリスロポエチンで刺激される。腎臓の病気腎不全になるとこのホルモンが生成されないため（　　　　）になる","腎性貧血","正解：腎性貧血\nプリント参照"],
+    ["1","採血をするときに血液が固まらないようにするために抗凝固剤が使われる。末梢血検査の試験官には（　　　　）が入っている。凝固検査の試験官にはヘパリンが入っている。ともに、血液中のカルシウムの働きを阻害することで血液が固まらないようになっている。","EDPA","正解：EDPA\nプリント参照"],
+    ["1","採血をするときに血液が固まらないようにするために抗凝固剤が使われる。末梢血検査の試験官にはEDPAが入っている。凝固検査の試験官には（　　　　）が入っている。ともに、血液中のカルシウムの働きを阻害することで血液が固まらないようになっている。","ヘパリン","正解：ヘパリン\nプリント参照"],
+    ["1","採血をするときに血液が固まらないようにするために抗凝固剤が使われる。末梢血検査の試験官にはEDPAが入っている。凝固検査の試験官にはヘパリンが入っている。ともに、血液中の（　　　　　）の働きを阻害することで血液が固まらないようになっている。","カルシウム","正解：カルシウム\nプリント参照"],
+    ["1","採血した試験官の中では糖が（　　　）によって消費されるため時間が経過すると血糖値は低下する。これを防ぐため血糖検査の試験官にはEDPAとフッ化ナトリウムが入っていて、血液が凝固せずにさらに等が消費されないようになっている。","赤血球","正解：赤血球\nプリント参照"],
+    ["1","採血した試験官の中では糖が赤血球によって消費されるため時間が経過すると血糖値は低下する。これを防ぐため血糖検査の試験官には（　　　　）とフッ化ナトリウムが入っていて、血液が凝固せずにさらに等が消費されないようになっている。","EDTA","正解：EDTA\nプリント参照"],
+    ["1","採血した試験官の中では糖が赤血球によって消費されるため時間が経過すると血糖値は低下する。これを防ぐため血糖検査の試験官にはEDPAと（　　　　　　　　　）が入っていて、血液が凝固せずにさらに等が消費されないようになっている。","フッ化ナトリウム","正解：フッ化ナトリウム\nプリント参照"],
+    ["1","凝固した血液を放置したり延伸して得られる液体成分を（　　）という","血清","正解：血清\nプリント参照"],
+    ["1","抗凝固剤で固まらないようにして延伸したときの液体成分を（　　）という","血漿","正解：血漿\nプリント参照"],
+    ["1","赤血球の寿命は（　　）日である","120","正解：120\nプリント参照"],
+    ["1","血小板寿命は（　　）日である","11","正解：11\nプリント参照"],
+    ["1","白血病は血液幹細胞の（　　　　　　）で正常の造血が行われない","自律的増殖","正解：自律的増殖\nプリント参照"],
+    ["1","急性白血病では（　　　）細胞が増殖し、赤血球や血小板造血が行われなくなる。顆粒球の減少のため発熱、血小板減少のため出血が起こり、赤血球減少で貧血となる","血液幹","正解：血液幹\nプリント参照"],
+    ["1","急性白血病では血液幹細胞が増殖し、赤血球や血小板造血が行われなくなる。（　　　）の減少のため発熱、血小板減少のため出血が起こり、赤血球減少で貧血となる","顆粒球","正解：顆粒球\nプリント参照"],
+    ["1","急性白血病では血液幹細胞が増殖し、赤血球や血小板造血が行われなくなる。顆粒球の減少のため発熱、（　　　）減少のため出血が起こり、赤血球減少で貧血となる","血小板","正解：血小板\nプリント参照"],
+    ["1","急性白血病では血液幹細胞が増殖し、赤血球や血小板造血が行われなくなる。顆粒球の減少のため発熱、血小板減少のため出血が起こり、（　　　）減少で貧血となる","赤血球","正解：赤血球\nプリント参照"],
+    ["1","急性白血病では血液幹細胞が増殖し、赤血球や血小板造血が行われなくなる。顆粒球の減少のため発熱、血小板減少のため出血が起こり、赤血球減少で（　　）となる","貧血","正解：貧血\nプリント参照"],
+    ["1","慢性骨髄性白血病では（　　　）染色体といわれる特殊な異常が出現する","Ph1","正解：Ph1\nプリント参照"],
+    ["1","形質細胞は（　　　）が分化したものでああり、免疫グロブリンを生成する。また、形質細胞の異常増殖による悪性腫瘍を多発性骨髄腫という","B細胞","正解：B細胞\nプリント参照"],
+    ["1","形質細胞はB細胞が分化したものでああり、（　　　　　　　）を生成する。また、形質細胞の異常増殖による悪性腫瘍を多発性骨髄腫という","免疫グロブリン","正解：免疫グロブリン\nプリント参照"],
+    ["1","形質細胞はB細胞が分化したものでああり、免疫グロブリンを生成する。また、形質細胞の異常増殖による悪性腫瘍を（　　　　　　　）という","多発性骨髄腫","正解：多発性骨髄腫\nプリント参照"],
+    ["1","良性腫瘍は局所に細胞の塊を作るのが臓器障害は起こさない。悪性腫瘍は発声臓器の機能を障害するだけではなく、離れた臓器に（　　）して組織を破壊する","転移","正解：転移\nプリント参照"],
+    ["1","（　）とは上皮組織の悪性腫瘍である。非上皮性組織の悪性腫瘍を肉腫という","癌","正解：癌\nプリント参照"],
+    ["1","癌とは上皮組織の（　　　　）である。非上皮性組織の悪性腫瘍を肉腫という","悪性腫瘍","正解：悪性腫瘍\nプリント参照"],
+    ["1","癌とは上皮組織の悪性腫瘍である。非上皮性組織の悪性腫瘍を（　　）という","肉腫","正解：肉腫\nプリント参照"],
+    ["1","血流が止まって細胞が死ぬことを（　　）といい、プログラムされた生理的な細胞死をアポトーシスという","壊死","正解：壊死\nプリント参照"],
+    ["1","血流が止まって細胞が死ぬことを壊死といい、プログラムされた生理的な細胞死を（　　　　　　）という","アポトーシス","正解：アポトーシス\nプリント参照"],
+	["1","生体防御の第1段階は（　　　）防御である。汗、涙、鼻水、気管の粘膜、胃液などで病原体が体の中に入るのを防ぐ","物理的","正解：物理的\nプリント参照"],
+["1","異物が体内に侵入すると第２段階として（　　　）、マクロファージなどが働いていて自分を守る、これを自然免疫という","好中球","正解：好中球\nプリント参照"],
+["1","異物が体内に侵入すると第２段階として好中球、（　　　　　　　）などが働いていて自分を守る、これを自然免疫という","マクロファージ","正解：マクロファージ\nプリント参照"],
+["1","異物が体内に侵入すると第２段階として好中球、マクロファージなどが働いていて自分を守る、これを（　　）免疫という","自然","正解：自然\nプリント参照"],
+
+["1","第２段階を突破して病原体が体内に入るとリンパ球や形質細胞が働いて体を防御する。（　　　　）は異物の抗原を認識し、この情報をヘルパーT細胞に伝える。このことを抗原提示という。これが第３段階、獲得免疫の始まりである","樹状細胞","正解：樹状細胞\nプリント参照"],
+["1","第２段階を突破して病原体が体内に入るとリンパ球や形質細胞が働いて体を防御する。樹状細胞は異物の抗原を認識し、この情報を（　　　　　　　）に伝える。このことを抗原提示という。これが第３段階、獲得免疫の始まりである","ヘルパーT細胞","正解：\nプリント参照"],
+["1","第２段階を突破して病原体が体内に入るとリンパ球や憩室細胞が働いて体を防御する。樹状細胞は異物の抗原を認識し、この情報をヘルパーT細胞に伝える。このことを（　　）提示という。これが第３段階、獲得免疫の始まりである","抗原","正解：抗原\nプリント参照"],
+["1","第２段階を突破して病原体が体内に入るとリンパ球や憩室細胞が働いて体を防御する。樹状細胞は異物の抗原を認識し、この情報をヘルパーT細胞に伝える。このことを抗原提示という。これが第３段階、（　　）免疫の始まりである","獲得","正解：獲得\nプリント参照"],
+["1","（　　　　）から情報を受け取ったヘルパーT細胞はB細胞に情報を伝達して抗体を作る。B細胞は形質細胞に分化して抗体を作るようになる。またヘルパーT細胞はキラーT細胞に情報を伝え感染細胞を破壊するようになる","樹状細胞","正解：樹状細胞\nプリント参照"],
+["1","樹状細胞から情報を受け取った（　　　　　）細胞はB細胞に情報を伝達して抗体を作る。B細胞は形質細胞に分化して抗体を作るようになる。またヘルパーT細胞はキラーT細胞に情報を伝え感染細胞を破壊するようになる","ヘルパーT","正解：ヘルパーT\nプリント参照"],
+["1","樹状細胞から情報を受け取ったヘルパーT細胞は（　　　）に情報を伝達して抗体を作る。B細胞は形質細胞に分化して抗体を作るようになる。またヘルパーT細胞はキラーT細胞に情報を伝え感染細胞を破壊するようになる","B細胞","正解：B細胞\nプリント参照"],
+["1","樹状細胞から情報を受け取ったヘルパーT細胞はB細胞に情報を伝達して抗体を作る。B細胞は形質細胞に分化して（　　）を作るようになる。またヘルパーT細胞はキラーT細胞に情報を伝え感染細胞を破壊するようになる","抗体","正解：抗体\nプリント参照"],
+["1","樹状細胞から情報を受け取ったヘルパーT細胞はB細胞に情報を伝達して抗体を作る。B細胞は（　　　　）に分化して抗体を作るようになる。またヘルパーT細胞はキラーT細胞に情報を伝え感染細胞を破壊するようになる","形質細胞","正解：形質細胞\nプリント参照"],
+["1","樹状細胞から情報を受け取ったヘルパーT細胞はB細胞に情報を伝達して抗体を作る。B細胞は形質細胞に分化して抗体を作るようになる。また（　　　　　　　）はキラーT細胞に情報を伝え感染細胞を破壊するようになる","ヘルパーT細胞","正解：ヘルパーT細胞\nプリント参照"],
+["1","樹状細胞から情報を受け取ったヘルパーT細胞はB細胞に情報を伝達して抗体を作る。B細胞は形質細胞に分化して抗体を作るようになる。またヘルパーT細胞は（　　　　　）に情報を伝え感染細胞を破壊するようになる","キラーT細胞","正解：キラーT細胞\nプリント参照"],
+["1","免疫グロブリンで異物を攻撃することを（　　）免疫といい、T細胞に命令して攻撃することを細胞性免疫という","液性","正解：液性\nプリント参照"],
+["1","免疫グロブリンで異物を攻撃することを液性免疫といい、T細胞に命令して攻撃することを（　　　）免疫という","細胞性","正解：細胞性\nプリント参照"],
+["1","（　　　　　　）とは免疫システムの機能が不良となって、体が自分の組織を攻撃してしまう病気である","自己免疫疾患","正解：自己免疫疾患\nプリント参照"],
+["1","通常は無害な物質に対する異常な免疫応答を（　　　　　）反応という","アレルギー","正解：アレルギー\nプリント参照"],
+["1","一型アレルギーとは抗原が未満細胞や好塩基球に結合した（　　　）と結合するとヒスタミンやロイコトリエンが放出される。その結果、血管透過性が亢進し平滑筋が収縮する。アナフィラキシー、アトピー性皮膚炎、花粉症、アレルギー性鼻炎など。","IgE","正解：IgE\nプリント参照"],
+["1","一型アレルギーとは抗原が未満細胞や好塩基球に結合したIgEと結合すると（　　　　　）やロイコトリエンが放出される。その結果、血管透過性が亢進し平滑筋が収縮する。アナフィラキシー、アトピー性皮膚炎、花粉症、アレルギー性鼻炎など。","ヒスタミン","正解：ヒスタミン\nプリント参照"],
+["1","三型アレルギーは（　　　　　）が組織に沈着し、組織を破壊する糸球体腎炎、sle腎炎、などがある","免疫複合体","正解：免疫複合体\nプリント参照"],
+["1","４型アレルギーは（　　　）が関与するアレルギー。ツベルクリン反応、接触性皮膚炎などがある","T細胞","正解：T細胞\nプリント参照"],
+["1","感染症を引き起こす病原体として（　　）、ウイルス、真菌、寄生虫などがある","細菌","正解：細菌\nプリント参照"],
+["1","感染症を引き起こす病原体として細菌、（　　　　）、真菌、寄生虫などがある","ウイルス","正解：ウイルス\nプリント参照"],
+["1","感染症を引き起こす病原体として細菌、ウイルス、（　　）、寄生虫などがある","真菌","正解：真菌\nプリント参照"],
+["1","感染症を引き起こす病原体として細菌、ウイルス、真菌、（　　　）などがある","寄生虫","正解：寄生虫\nプリント参照"],
+["1","（　　　　）は自分で増殖する能力を持たないので別の生物の細胞の中に侵入し、その細胞の常食機能を利用して増える","ウイルス","正解：ウイルス\nプリント参照"],
+["1","ウイルスは自分で増殖する能力を持たないので（　　　　）の細胞の中に侵入し、その細胞の常食機能を利用して増える","別の生物","正解：\nプリント参照"],
+["1","（　　）、熱感、腫脹、疼痛、機能障害は炎症の５徴候といわれ、これらがみられた場合は感染症を疑う","発赤","正解：発赤\nプリント参照"],
+["1","発赤、（　　）、腫脹、疼痛、機能障害は炎症の５徴候といわれ、これらがみられた場合は感染症を疑う","熱感","正解：熱感\nプリント参照"],
+["1","発赤、熱感、（　　）、疼痛、機能障害は炎症の５徴候といわれ、これらがみられた場合は感染症を疑う","腫脹","正解：腫脹\nプリント参照"],
+["1","発赤、熱感、腫脹、（　　）、機能障害は炎症の５徴候といわれ、これらがみられた場合は感染症を疑う","疼痛","正解：疼痛\nプリント参照"],
+["1","発赤、熱感、腫脹、疼痛、（　　　　）は炎症の５徴候といわれ、これらがみられた場合は感染症を疑う","機能障害","正解：機能障害\nプリント参照"],
+["1","（　　　　　　　　　　　　　）は感染症の有無にかかわらず、すべての場面に必要な感染予防策で血液、汗を除くすべての体液および排泄物損傷のある皮膚及び粘膜に適用される","","正解：\nプリント参照"],
+["1","スタンダードプリコーションは感染症の有無にかかわらず、すべての場面に必要な感染予防策で（　　）、汗を除くすべての体液および排泄物損傷のある皮膚及び粘膜に適用される","","正解：\nプリント参照"],
+["1","スタンダードプリコーションは感染症の有無にかかわらず、すべての場面に必要な感染予防策で血液、（　）を除くすべての体液および排泄物損傷のある皮膚及び粘膜に適用される","","正解：\nプリント参照"],
+["1","スタンダードプリコーションは感染症の有無にかかわらず、すべての場面に必要な感染予防策で血液、汗を除くすべての（　　）および排泄物損傷のある皮膚及び粘膜に適用される","","正解：\nプリント参照"],
+["1","感染対策として感染経路を遮断する必要がある。感染経路として(　　　　）、飛沫感染、接触感染に３つの感染経路がある","空気感染","正解：空気感染\nプリント参照"],
+["1","感染対策として感染経路を遮断する必要がある。感染経路として空気感染、（　　　　）、接触感染に３つの感染経路がある","飛沫感染","正解：飛沫感染\nプリント参照"],
+["1","感染対策として感染経路を遮断する必要がある。感染経路として空気感染、飛沫感染、（　　　　）に３つの感染経路がある","接触感染","正解：接触感染\nプリント参照"],
+["1","接触感染は最も頻度が高く（　　　）や手袋の使用が感染防止の基本である","手洗い","正解：手洗い\nプリント参照"],
+["1","接触感染は最も頻度が高く手洗いや（　　）の使用が感染防止の基本である","手袋","正解：手袋\nプリント参照"],
+["1","飛沫感染は咳やくしゃみなどにより感染軌道から分泌物が飛散し、それを吸入したり直接接触することにより二次感染を起こす。（　　）は１M以上遠くへは飛散しない対策としてマスクうがいなどを使用する。代表的な感染症としてインフルエンザなどがある。","飛沫","正解：飛沫\nプリント参照"],
+["1","飛沫感染は咳やくしゃみなどにより感染軌道から分泌物が飛散し、それを吸入したり直接接触することにより二次感染を起こす。飛沫は１M以上遠くへは飛散しない対策として（　　　）、うがいなどを使用する。代表的な感染症としてインフルエンザなどがある。","マスク","正解：マスク\nプリント参照"],
+["1","飛沫感染は咳やくしゃみなどにより感染軌道から分泌物が飛散し、それを吸入したり直接接触することにより二次感染を起こす。飛沫は１M以上遠くへは飛散しない対策としてマスク、（　　　）などを使用する。代表的な感染症としてインフルエンザなどがある。","うがい","正解：うがい\nプリント参照"],
+["1","飛沫感染は咳やくしゃみなどにより感染軌道から分泌物が飛散し、それを吸入したり直接接触する子tにより二次感染を起こす。飛沫は１M以上遠くへは飛散しない対策としてマスクうがいなどを使用する。代表的な感染症として（　　　　　　　）などがある。","インフルエンザ","正解：インフルエンザ　\nプリント参照"],
+["1","空気感染の病原体は（　　　）、麻疹、水痘の三種類であり、飛沫から水分や上皮細胞が蒸発・脱落した飛沫核は落下速度が非常に遅く、長時間空中に浮遊し、遠方まで運ばれる、標準予防策のほかに、個室個別管理、N95マスクの使用などが必要","結核菌","正解：結核菌\nプリント参照"],
+["1","空気感染の病原体は結核菌、（　　）、水痘の三種類であり、飛沫から水分や上皮細胞が蒸発・脱落した飛沫核は落下速度が非常に遅く、長時間空中に浮遊し、遠方まで運ばれる、標準予防策のほかに、個室個別管理、N95マスクの使用などが必要","麻疹","正解：麻疹\nプリント参照"],
+["1","空気感染の病原体は結核菌、麻疹、（　　）の三種類であり、飛沫から水分や上皮細胞が蒸発・脱落した飛沫核は落下速度が非常に遅く、長時間空中に浮遊し、遠方まで運ばれる、標準予防策のほかに、個室個別管理、N95マスクの使用などが必要","水痘","正解：水痘\nプリント参照"],
+["1","空気感染の病原体は結核菌、麻疹、水痘の三種類であり、飛沫から水分や上皮細胞が蒸発・脱落した（　　　）は落下速度が非常に遅く、長時間空中に浮遊し、遠方まで運ばれる、標準予防策のほかに、個室個別管理、N95マスクの使用などが必要","飛沫核","正解：飛沫核\nプリント参照"],
+["1","空気感染の病原体は結核菌、麻疹、水痘の三種類であり、飛沫から水分や上皮細胞が蒸発・脱落した飛沫核は落下速度が非常に遅く、長時間空中に浮遊し、遠方まで運ばれる、標準予防策のほかに、個室個別管理、（　　）マスクの使用などが必要","N95","正解：N95\nプリント参照"],
+
+
+    
+];
+
+// ===================== アプリ状態 =====================
+let questions = [];
+let currentIdx = 0;
+let score = 0;
+let total = 0;
+let answered = false;
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function goToCount() {
+  document.getElementById('total-label').textContent = `全 ${monndai.length} 問から出題`;
+  showScreen('count-screen');
+  document.getElementById('count-input').focus();
+}
+
+function startQuiz() {
+  const val = parseInt(document.getElementById('count-input').value);
+  if (!val || val < 1) {
+    alert('1以上の数字を入力してください。');
+    return;
+  }
+  total = Math.min(val, monndai.length);
+  score = 0;
+  currentIdx = 0;
+  answered = false;
+  questions = shuffle([...monndai]).slice(0, total);
+  showScreen('quiz-screen');
+  renderQuestion();
+}
+
+function renderQuestion() {
+  answered = false;
+  const q = questions[currentIdx];
+  const type = q[0];
+
+  // progress
+  const pct = (currentIdx / total) * 100;
+  document.getElementById('prog-fill').style.width = pct + '%';
+  document.getElementById('prog-label').textContent = `${currentIdx + 1} / ${total}`;
+
+  // badge
+  const badge = document.getElementById('qtype-badge');
+  const typeMap = {'1':'穴埋め問題','2':'4択問題','3':'〇✕問題','5':'2択問題'};
+  badge.textContent = typeMap[type] || '問題';
+  badge.className = `qtype-badge qtype-${type}`;
+
+  // question
+  document.getElementById('question-text').textContent = `第${currentIdx+1}問　${q[1]}`;
+
+  // hide explanation
+  const expEl = document.getElementById('explanation');
+  expEl.classList.remove('visible');
+  document.getElementById('btn-next').classList.remove('visible');
+
+  const area = document.getElementById('answer-area');
+  area.innerHTML = '';
+
+  if (type === '2') {
+    // 4択
+    const choices = shuffle([q[2], q[3], q[4], q[5]]);
+    const div = document.createElement('div');
+    div.className = 'choices';
+    choices.forEach(c => {
+      const btn = document.createElement('button');
+      btn.className = 'choice-btn';
+      btn.textContent = c;
+      btn.onclick = () => judgeType2(btn, c, q[2], q, div);
+      div.appendChild(btn);
+    });
+    area.appendChild(div);
+  } else if (type === '3') {
+    // 〇✕
+    const correctBtn = q[2]; // "b1"=〇 "b2"=✕
+    const row = document.createElement('div');
+    row.className = 'tf-row';
+    const maru = document.createElement('button');
+    maru.className = 'tf-btn'; maru.textContent = '〇';
+    maru.onclick = () => judgeType3(maru, 'b1', correctBtn, q, row);
+    const batsu = document.createElement('button');
+    batsu.className = 'tf-btn'; batsu.textContent = '✕';
+    batsu.onclick = () => judgeType3(batsu, 'b2', correctBtn, q, row);
+    row.appendChild(maru); row.appendChild(batsu);
+    area.appendChild(row);
+  } else if (type === '1') {
+    // 穴埋め
+    const row = document.createElement('div');
+    row.className = 'fill-row';
+    const input = document.createElement('input');
+    input.className = 'fill-input'; input.type = 'text';
+    input.placeholder = '回答を入力…';
+    input.onkeydown = (e) => { if (e.key === 'Enter') judgeType1(input, q); };
+    const btn = document.createElement('button');
+    btn.className = 'btn-submit'; btn.textContent = '回答する';
+    btn.onclick = () => judgeType1(input, q);
+    row.appendChild(input); row.appendChild(btn);
+    area.appendChild(row);
+    setTimeout(() => input.focus(), 50);
+  } else if (type === '5') {
+    // 2択
+    const choices = shuffle([
+      {label: q[2], val: '2'},
+      {label: q[3], val: '3'}
+    ]);
+    const div = document.createElement('div');
+    div.className = 'choices';
+    choices.forEach(c => {
+      const btn = document.createElement('button');
+      btn.className = 'choice-btn';
+      btn.textContent = c.label;
+      btn.onclick = () => judgeType5(btn, c.val, q, div);
+      div.appendChild(btn);
+    });
+    area.appendChild(div);
+  }
+}
+
+function showExplanation(isCorrect, explanationText) {
+  answered = true;
+  const expEl = document.getElementById('explanation');
+  const lbl = document.getElementById('result-label');
+  lbl.textContent = isCorrect ? '正解！🎉' : '不正解…';
+  lbl.className = 'result-label ' + (isCorrect ? 'correct' : 'wrong');
+  document.getElementById('explanation-text').textContent = explanationText;
+  expEl.classList.add('visible');
+  document.getElementById('btn-next').classList.add('visible');
+  expEl.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+function judgeType2(clickedBtn, selected, correct, q, container) {
+  if (answered) return;
+  const isCorrect = selected === correct;
+  if (isCorrect) score++;
+  container.querySelectorAll('.choice-btn').forEach(b => {
+    b.disabled = true;
+    if (b.textContent === correct) b.classList.add('correct');
+    else if (b === clickedBtn && !isCorrect) b.classList.add('wrong');
+  });
+  showExplanation(isCorrect, q[6]);
+}
+
+function judgeType3(clickedBtn, selected, correct, q, container) {
+  if (answered) return;
+  const isCorrect = selected === correct;
+  if (isCorrect) score++;
+  // find explanation: it can be at index 3 or 5 depending on data format
+  const expl = q[3] || q[5] || '';
+  container.querySelectorAll('.tf-btn').forEach(b => {
+    b.disabled = true;
+    const isCircle = b.textContent === '〇';
+    const btnKey = isCircle ? 'b1' : 'b2';
+    if (btnKey === correct) b.classList.add('correct');
+    else if (b === clickedBtn && !isCorrect) b.classList.add('wrong');
+  });
+  showExplanation(isCorrect, expl);
+}
+
+function judgeType1(input, q) {
+  if (answered) return;
+  const userAns = input.value.trim();
+  if (!userAns) return;
+  // Use flexible matching (normalize)
+  const normalize = s => s.replace(/\s/g,'').toLowerCase();
+  const isCorrect = normalize(userAns) === normalize(q[2]);
+  if (isCorrect) score++;
+  input.disabled = true;
+  input.classList.add(isCorrect ? 'correct' : 'wrong');
+  input.nextElementSibling.disabled = true;
+  showExplanation(isCorrect, q[3]);
+}
+
+function judgeType5(clickedBtn, selected, q, container) {
+  if (answered) return;
+  const isCorrect = selected === '2'; // index 2 is correct choice
+  if (isCorrect) score++;
+  container.querySelectorAll('.choice-btn').forEach(b => {
+    b.disabled = true;
+    if (b.textContent === q[2]) b.classList.add('correct');
+    else if (b === clickedBtn && !isCorrect) b.classList.add('wrong');
+  });
+  showExplanation(isCorrect, q[4]);
+}
+
+function nextQuestion() {
+  currentIdx++;
+  if (currentIdx >= total) {
+    showResult();
+  } else {
+    renderQuestion();
+    document.getElementById('quiz-card').scrollIntoView({behavior:'smooth', block:'start'});
+  }
+}
+
+function showResult() {
+  const pct = Math.round((score / total) * 100);
+  document.getElementById('score-num').textContent = pct;
+  document.getElementById('score-denom').textContent = `/ 100点`;
+  document.getElementById('prog-fill').style.width = '100%';
+
+  let hyouka, sub;
+  if (pct === 100) { hyouka = '満点合格おめでとう！！🎊'; sub = '完璧です！素晴らしい！'; }
+  else if (pct >= 80) { hyouka = 'おしい！あと少しで満点！'; sub = `正解数: ${score} / ${total}`; }
+  else if (pct >= 60) { hyouka = '合格おめでとう！！'; sub = `正解数: ${score} / ${total}`; }
+  else if (pct >= 50) { hyouka = '惜しい！もう少しで合格！'; sub = 'もう一回チャレンジしてね！'; }
+  else if (pct <= 10) { hyouka = '本当に勉強してる!？😅'; sub = '頑張れ！'; }
+  else { hyouka = '勉強してからもう一度！'; sub = `正解数: ${score} / ${total}`; }
+
+  document.getElementById('hyouka-text').textContent = hyouka;
+  document.getElementById('hyouka-sub').textContent = sub;
+  showScreen('result-screen');
+}
+
+function restart() {
+  document.getElementById('count-input').value = '';
+  showScreen('count-screen');
+  document.getElementById('count-input').focus();
+}
+</script>
+</body>
+</html>
