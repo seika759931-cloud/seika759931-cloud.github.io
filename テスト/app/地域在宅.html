@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>地域在宅 クイズ</title>
+<style>
+  :root {
+    --bg: #f0f4f8;
+    --card: #ffffff;
+    --primary: #2c6fad;
+    --primary-dark: #1a4f80;
+    --accent: #e05577;
+    --correct: #27ae60;
+    --wrong: #e74c3c;
+    --text: #1a2533;
+    --muted: #6b7c93;
+    --border: #d0dce8;
+    --yellow: #fff591;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  /* ===== SCREENS ===== */
+  .screen { display: none; width: 100%; max-width: 700px; }
+  .screen.active { display: flex; flex-direction: column; align-items: center; }
+
+  /* ===== HOME ===== */
+  #home-screen {
+    text-align: center;
+    gap: 28px;
+  }
+  .home-title {
+    font-size: 3.5rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    color: var(--primary);
+    line-height: 1;
+  }
+  .home-subtitle {
+    font-size: 1rem;
+    color: var(--muted);
+    margin-top: -10px;
+  }
+  .home-badge {
+    display: inline-block;
+    background: var(--primary);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    padding: 4px 12px;
+    border-radius: 20px;
+    text-transform: uppercase;
+  }
+
+  /* ===== COUNT SCREEN ===== */
+  #count-screen { gap: 24px; }
+  .count-card {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 36px 40px;
+    box-shadow: 0 4px 20px rgba(44,111,173,0.10);
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .count-card h2 { font-size: 1.4rem; color: var(--primary); }
+  .count-card p { font-size: 0.9rem; color: var(--muted); }
+  .count-input {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 1.3rem;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    outline: none;
+    text-align: center;
+    transition: border-color 0.2s;
+  }
+  .count-input:focus { border-color: var(--primary); }
+  .total-count { color: var(--muted); font-size: 0.85rem; text-align: right; }
+
+  /* ===== QUIZ SCREEN ===== */
+  #quiz-screen { gap: 20px; width: 100%; max-width: 760px; }
+  .progress-bar-wrap {
+    width: 100%;
+    background: var(--border);
+    border-radius: 99px;
+    height: 8px;
+  }
+  .progress-bar-fill {
+    height: 8px;
+    background: linear-gradient(90deg, var(--primary), #5ba4d9);
+    border-radius: 99px;
+    transition: width 0.4s ease;
+  }
+  .progress-label {
+    font-size: 0.8rem;
+    color: var(--muted);
+    width: 100%;
+    text-align: right;
+  }
+  .quiz-card {
+    background: var(--card);
+    border-radius: 18px;
+    padding: 36px 40px;
+    box-shadow: 0 4px 24px rgba(44,111,173,0.10);
+    width: 100%;
+  }
+  .qtype-badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-bottom: 16px;
+    text-transform: uppercase;
+  }
+  .qtype-1 { background: #e8f4fd; color: #2c6fad; }
+  .qtype-2 { background: #edf9f0; color: #27ae60; }
+  .qtype-3 { background: #fef3cd; color: #c07c00; }
+  .qtype-5 { background: #f3e8fd; color: #7b2dad; }
+  .question-text {
+    font-size: 1.15rem;
+    line-height: 1.7;
+    font-weight: 600;
+    margin-bottom: 28px;
+    color: var(--text);
+  }
+
+  /* choices */
+  .choices { display: flex; flex-direction: column; gap: 10px; }
+  .choice-btn {
+    display: block;
+    width: 100%;
+    padding: 14px 20px;
+    background: #f6f9fc;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    font-size: 1rem;
+    font-family: inherit;
+    color: var(--text);
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.15s;
+  }
+  .choice-btn:hover:not(:disabled) {
+    background: #e8f2fc;
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+  .choice-btn.correct { background: #d4f5e2; border-color: var(--correct); color: #1a6e3e; font-weight: 700; }
+  .choice-btn.wrong   { background: #fde8e8; border-color: var(--wrong);   color: #8b1a1a; }
+  .choice-btn:disabled { cursor: default; }
+
+  /* true/false */
+  .tf-row { display: flex; gap: 16px; justify-content: center; margin-top: 8px; }
+  .tf-btn {
+    width: 140px;
+    height: 80px;
+    font-size: 2rem;
+    border: 2px solid var(--border);
+    border-radius: 14px;
+    background: #f6f9fc;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .tf-btn:hover:not(:disabled) { background: #e8f2fc; border-color: var(--primary); }
+  .tf-btn.correct { background: #d4f5e2; border-color: var(--correct); }
+  .tf-btn.wrong   { background: #fde8e8; border-color: var(--wrong); }
+  .tf-btn:disabled { cursor: default; }
+
+  /* fill-in */
+  .fill-row { display: flex; gap: 10px; align-items: center; }
+  .fill-input {
+    flex: 1;
+    padding: 12px 16px;
+    font-size: 1.1rem;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    outline: none;
+    font-family: inherit;
+    transition: border-color 0.2s;
+  }
+  .fill-input:focus { border-color: var(--primary); }
+  .fill-input.correct { border-color: var(--correct); background: #d4f5e2; }
+  .fill-input.wrong   { border-color: var(--wrong);   background: #fde8e8; }
+
+  /* ===== EXPLANATION ===== */
+  .explanation {
+    display: none;
+    margin-top: 20px;
+    padding: 20px 24px;
+    border-radius: 12px;
+    background: var(--yellow);
+    border-left: 5px solid var(--accent);
+    font-size: 0.95rem;
+    line-height: 1.7;
+    white-space: pre-line;
+  }
+  .explanation.visible { display: block; }
+  .result-label {
+    font-size: 1.4rem;
+    font-weight: 800;
+    margin-bottom: 8px;
+  }
+  .result-label.correct { color: var(--correct); }
+  .result-label.wrong   { color: var(--wrong); }
+
+  /* ===== RESULT SCREEN ===== */
+  #result-screen { gap: 24px; text-align: center; }
+  .result-card {
+    background: var(--card);
+    border-radius: 18px;
+    padding: 48px 40px;
+    box-shadow: 0 4px 24px rgba(44,111,173,0.10);
+    width: 100%;
+  }
+  .score-circle {
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), #5ba4d9);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 24px;
+    box-shadow: 0 8px 30px rgba(44,111,173,0.3);
+  }
+  .score-num { font-size: 3rem; font-weight: 900; line-height: 1; }
+  .score-denom { font-size: 1rem; opacity: 0.8; }
+  .hyouka-text { font-size: 1.5rem; font-weight: 700; margin-bottom: 8px; color: var(--primary); }
+  .hyouka-sub  { font-size: 0.9rem; color: var(--muted); }
+
+  /* ===== BUTTONS ===== */
+  .btn-primary {
+    padding: 16px 48px;
+    font-size: 1.15rem;
+    font-weight: 700;
+    font-family: inherit;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    box-shadow: 0 4px 16px rgba(44,111,173,0.25);
+  }
+  .btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-next {
+    margin-top: 20px;
+    padding: 12px 36px;
+    font-size: 1rem;
+    font-weight: 700;
+    font-family: inherit;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s;
+    display: none;
+  }
+  .btn-next.visible { display: inline-block; }
+  .btn-next:hover { background: #c03060; }
+  .btn-submit {
+    padding: 12px 32px;
+    font-size: 1rem;
+    font-weight: 700;
+    font-family: inherit;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s;
+    white-space: nowrap;
+  }
+  .btn-submit:hover { background: var(--primary-dark); }
+  .btn-submit:disabled { background: var(--border); cursor: default; }
+</style>
+</head>
+<body>
+
+<!-- HOME -->
+<div id="home-screen" class="screen active">
+  <span class="home-badge">医療系国試対策</span>
+  <h1 class="home-title">地域在宅</h1>
+  <p class="home-subtitle">ランダム出題クイズ</p>
+  <button class="btn-primary" onclick="goToCount()">スタート</button>
+</div>
+
+<!-- COUNT -->
+<div id="count-screen" class="screen">
+  <div class="count-card">
+    <h2>問題数を選んでください</h2>
+    <input class="count-input" type="number" id="count-input" min="1" placeholder="例: 10"
+      onkeydown="if(event.key==='Enter') startQuiz()">
+    <p class="total-count" id="total-label"></p>
+    <p>数字を入力してください（英数字は半角で）</p>
+    <button class="btn-primary" onclick="startQuiz()">問題へ</button>
+  </div>
+</div>
+
+<!-- QUIZ -->
+<div id="quiz-screen" class="screen">
+  <div class="progress-bar-wrap">
+    <div class="progress-bar-fill" id="prog-fill" style="width:0%"></div>
+  </div>
+  <div class="progress-label" id="prog-label">0 / 0</div>
+  <div class="quiz-card" id="quiz-card">
+    <span class="qtype-badge" id="qtype-badge"></span>
+    <div class="question-text" id="question-text"></div>
+    <div id="answer-area"></div>
+    <div class="explanation" id="explanation">
+      <div class="result-label" id="result-label"></div>
+      <div id="explanation-text"></div>
+    </div>
+    <div style="text-align:right">
+      <button class="btn-next" id="btn-next" onclick="nextQuestion()">次の問題 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- RESULT -->
+<div id="result-screen" class="screen">
+  <div class="result-card">
+    <div class="score-circle">
+      <div class="score-num" id="score-num">0</div>
+      <div class="score-denom" id="score-denom">/ 0点</div>
+    </div>
+    <div class="hyouka-text" id="hyouka-text"></div>
+    <div class="hyouka-sub" id="hyouka-sub"></div>
+  </div>
+  <button class="btn-primary" onclick="restart()">もう一度挑戦</button>
+</div>
+
+<script>
+// ===================== 問題データ =====================
+const monndai = [
+   ["1","地域とは限定された一定の区域、行政区域、医療圏、生活圏、学区、居住区域等の（　　）を示す","空間","正解：空間\nプリント参照"],
+["1","地域とは限定された一定の区域、行政区域、医療圏、（　　　）、学区、居住区域等の空間を示す","生活圏","正解：生活圏\nプリント参照"],
+["1","一次生活圏とは（　　）圏内の日常生活圏である","徒歩","正解：徒歩\nプリント参照"],
+["1","二次生活圏とはいくつかの一次生活圏の集まりであり（　　　）学区である","中学校","正解：中学校\nプリント参照"],
+["1","三次生活圏とは（　　　　　）のことであり、通勤・通学圏内のことである","社会生活圏","正解：社会生活圏\nプリント参照"],
+["1","訪問看護は（　　　　　　）に基づいた看護サービスを提供することである","訪問看護制度","正解：訪問看護制度\nプリント参照"],
+["1","在宅看護の目的は利用者とその家族それぞれのっ（　　　　）を維持、向上させることである。保険・医療・福祉に携わる者にはたとえ疾病や障害を持つ人々であっても社会参加を果たし、健常者と同様に生きがいを感じて暮らせるように支援する役割がある","生活の質","正解：\nプリント参照"],
+["1","在宅看護の目的は利用者とその家族それぞれのっ生活の質を維持、向上させることである。保険・医療・福祉に携わる者にはたとえ疾病や障害を持つ人々であっても（　　　　）を果たし、健常者と同様に生きがいを感じて暮らせるように支援する役割がある","社会参加","正解：社会参加\nプリント参照"],
+["1","在宅看護の目的は利用者とその家族それぞれのっ生活の質を維持、向上させることである。保険・医療・福祉に携わる者にはたとえ疾病や障害を持つ人々であっても社会参加を果たし、健常者と同様に（　　　　）を感じて暮らせるように支援する役割がある","生きがい","正解：生きがい\nプリント参照"],
+["1","WHOで採択された国際生活機能分類（ICF）：身体面、心理面の安定だけでなく、その人が望む活動や生活様式にあった（　　　　　　　　　）ことを支えることが在宅療養者を支える。","その人らしく生きる","正解：その人らしく生きる\nプリント参照"],
+["1","WHOで採択された（　　　　　　　　）（ICF）：身体面、心理面の安定だけでなく、その人が望む活動や生活様式にあったその人らしく生きることを支えることが在宅療養者を支える。","国際生活機能分類","正解：国際生活機能分類\nプリント参照"],
+["1","日本の高齢化率は2019年に28.4％を超えているが出生率は（　　）している。現在の高齢化率は29.4％である","低下","正解：低下\nプリント参照"],
+["1","日本の高齢化率は2019年に28.4％を超えているが出生率は低下している。現在の高齢化率は（　　）％である","29.4","正解：29.4\nプリント参照"],
+["1","人口減少や人口構造は（　　）している","変化","正解：変化\nプリント参照"],
+["1","2025年問題とは後期高齢者が急増するため（　　　　　　　　　　）の稼働に向けた体制作りが当面の課題となる","地域包括ケアシステム","正解：地域包括ケアシステム\nプリント参照"],
+["1","介護は社会が担うというコンセプトで2000年から（　　　　　）が施行している","介護保険法","正解：介護保険法\nプリント参照"],
+["1","自宅での介護力不足により、自宅以外を終の妻家として選択して（　　　　　　　　）を過ごす人もいる","エンドオブライフ","正解：エンドオブライフ\nプリント参照"],
+["1","在宅看護の講義には障害や慢性疾患を抱えても、さまざまに変化する（　　　　）を看護師が切れ間なく支援する","生活の場","正解：生活の場\nプリント参照"],
+["1","在宅看護では最後まで（　　　　　　　）をもっとウすることが療養者の共通目標となる","自分らしい生き方","正解：自分らしい生き方\nプリント参照"],
+["1","介護支援専門員を（　　　　　　　）という","ケアマネジャー","正解：ケアマネジャー"],
+["1","地域包括ケアシステムの対象は要介護、要支援者だけでなく（　　　）全体から地域の全住民である、圏域はおおむね30分で駆け付けられる圏内である","高齢者","正解：高齢者\nプリント参照"],
+["1","地域包括ケアシステムの対象は要介護、要支援者だけでなく高齢者全体から地域の（　　　）である、圏域はおおむね30分で駆け付けられる圏内である","全住民","正解：全住民\nプリント参照"],
+["1","地域包括ケアシステムの対象は要介護、要支援者だけでなく高齢者全体から地域の全住民である、圏域はおおむね（　　）で駆け付けられる圏内である","30分","正解：30分\nプリント参照"],
+["2","自分こととは自分でする。自らの健康管理（セルフケア）をする。市場さーびずは自ら購入する（自ら選択する）にあてはまる四つの助はどれか","自助","互助","共助","公助","正解：自助\nプリント参照"],
+["2","ボランティア活動や住民組織の活動を指す4つの助を何というか","互助","自助","公助","共助","正解：互助\nプリント参照"],
+["2","介護保険に大行される社会保険制度などは保険料を支払うことで利用できる4つの助をなんというか","共助","自助","互助","公助","正解：共助\nプリント参照"],
+["2","一般財団による高齢者福祉事業、生活保護など税金によって賄われる4つの助を何というか","公助","自助","共助","互助","正解：公助\nプリント参照"],
+["1","地域包括支援センターは地域支援事業所のうち包括的支援事業を一括して行う施設として2006年4月に創設された。主な業務は（　　　　　　　　　　　　）、総合相談・支援業務、権利擁護業務、包括的継続的ケアマネジメント支援事業である","介護予防ケアマネジメント","正解：介護予防ケアマネジメント\nプリント参照"],
+["1","地域包括支援センターは地域支援事業所のうち包括的支援事業を一括して行う施設として2006年4月に創設された。主な業務は介護予防ケアマネジメント、（　　　　　　　　　）、権利擁護業務、包括的継続的ケアマネジメント支援事業である","総合相談・支援業務","正解：総合相談・支援業務\nプリント参照"],
+["1","地域包括支援センターは地域支援事業所のうち包括的支援事業を一括して行う施設として2006年4月に創設された。主な業務は介護予防ケアマネジメント、総合相談・支援業務、（　　　　　　）、包括的継続的ケアマネジメント支援事業である","権利擁護業務","正解：権利擁護業務\nプリント参照"],
+["1","地域包括支援センターは地域支援事業所のうち包括的支援事業を一括して行う施設として2006年4月に創設された。主な業務は介護予防ケアマネジメント、総合相談・支援業務、権利擁護業務、（　　　　　　　　　　　　　　　　　　）である","包括的継続的ケアマネジメント支援事業","正解：包括的継続的ケアマネジメント支援事業\nプリント参照"],
+["1","地域包括支援センターでは（　　　　）・社会福祉士・主任ケアマネが必ず配置されている","保険師","正解：保険師\nプリント参照"],
+["1","地域包括支援センターでは保険師・（　　　　　　）・主任ケアマネが必ず配置されている","社会福祉士","正解：社会福祉士\nプリント参照"],
+["1","地域包括支援センターでは保険師・社会福祉士・（　　　　　　　）が必ず配置されている","主任ケアマネ","正解：主任ケアマネ\nプリント参照"],
+["1","地域包括支援センターの中にある包括的継続的ケアマネジメント支援事業とは（　　　　　　）を開催する","地域ケア会議","正解：地域ケア会議\nプリント参照"],
+["1","地域看護において保険師は人々の協調行動を活発にすることにより、社会の効率性を高める。人とのつながりの豊かさや地域のきずなを意味する（　　　　　　　　　）を活用する","ソーシャルキャピタル","正解：ソーシャルキャピタル\nプリント参照"],
+["1","在宅ケアの目的は対象外生活している場所で（　　）・医療・福祉サービスを提供し、健康の維持・増進・回復、および、対象が望む終末を迎えられることを目的とする。看護も含まれつが、主に介護サービスをいう。本人が目指すQOLを支える活動","保険","正解：保険\nプリント参照"],
+["1","在宅ケアの目的は対象外生活している場所で保健・（　　）・福祉サービスを提供し、健康の維持・増進・回復、および、対象が望む終末を迎えられることを目的とする。看護も含まれつが、主に介護サービスをいう。本人が目指すQOLを支える活動","医療","正解：医療\nプリント参照"],
+["1","在宅ケアの目的は対象外生活している場所で保健・（　　　　　　）を提供し、健康の維持・増進・回復、および、対象が望む終末を迎えられることを目的とする。看護も含まれつが、主に介護サービスをいう。本人が目指すQOLを支える活動","福祉サービス","正解：福祉サービス\nプリント参照"],
+["1","通所介護のことを（　　　　　　）という","デイサービス","正解：デイサービス\nプリント参照"],
+["1","通所リハビリテーションのことを（　　　　）という","デイケア","正解：デイケア\nプリント参照"],
+["1","短期入所のことを（　　　　　　）という","ショートステイ","正解：ショートステイ\nプリント参照"],
+["1","自立・自立支援の考え方として国際生活機能分類（ICF）の障害の多らえ方を発展させ、（　　　　）とは対象となる人の障害を克服するだけでなく、その人の持っている力や強みに着目して支援することである。という考え方がスタンダードになった。","自立支援","正解：自立支援\nプリント参照"],
+["1","自立・自立支援の考え方として国際生活機能分類（ICF）の障害の多らえ方を発展させ、自立支援とは対象となる人の障害を克服するだけでなく、その人の持っている（　）や強みに着目して支援することである。という考え方がスタンダードになった。","力","正解：力\nプリント参照"],
+["1","自立・自立支援の考え方として国際生活機能分類（ICF）の障害の多らえ方を発展させ、自立支援とは対象となる人の障害を克服するだけでなく、その人の持っている力や（　　）に着目して支援することである。という考え方がスタンダードになった。","強み","正解：強み\nプリント参照"],
+["1","医療施設では　主に（　　　　）が適用となる施設である","医療保険","正解：医療保険\nプリント参照"],
+["1","介護施設では主に（　　　　）が適用となる施設である","介護保険","正解：介護保険\nプリント参照"],
+["1","介護サービス事業所は介護給付におけるサービスを行う事業所のことであり、看護師は（　　　　　　　）と連携することが多い。業務は身体介護、生活介護、通所介護がある","ホームヘルパー","正解：ホームヘルパー\nプリント参照"],
+["1","介護サービス事業所は介護給付におけるサービスを行う事業所のことであり、看護師はホームヘルパーと連携することが多い。業務は（　　　　）、生活介護、通所介護がある","身体介護","正解：身体介護\nプリント参照"],
+["1","介護サービス事業所は介護給付におけるサービスを行う事業所のことであり、看護師はホームヘルパーと連携することが多い。業務は身体介護、（　　　　）、通所介護がある","生活介護","正解：生活介護\nプリント参照"],
+["1","介護サービス事業所は介護給付におけるサービスを行う事業所のことであり、看護師はホームヘルパーと連携することが多い。業務は身体介護、生活介護、（　　　　）がある","通所介護","正解：\nプリント参照"],
+["1","訪問看護にかかわる法律には（　　　　　）と健康保険法がある。","介護保険法","正解：介護保険法\nプリント参照"],
+["1","訪問看護にかかわる法律には介護保険法と（　　　　　　）がある。","健康保険法","正解：健康保険法\nプリント参照"],
+["1","介護保険法で訪問看護にかかわる場合は（　　　　　）内で、一号被保険者、または第2号被保険者（特定疾患）のものが利用できる","支給限度額","正解：支給限度額\nプリント参照"],
+["1","介護保険法で訪問看護にかかわる場合は支給限度額内で、一号被保険者、または第2号被保険者（　　　　　）のものが利用できる","特定疾患","正解：特定疾患\nプリント参照"],
+["1","健康保険法で訪問看護を利用する場合は原則週（　）回、ただし特別訪問看護指示書で週4回以上、複数回/日の指示がある場合は、訪問が可能である","３","正解：３\nプリント参照"],
+["1","健康保険法で訪問看護を利用する場合は原則週三回、ただし（　　　　　　　　　）で週4回以上、複数回/日の指示がある場合は、訪問が可能である","特別訪問看護指示書","正解：特別訪問看護指示書\nプリント参照"],
+["5","平均在院日数は（　　）傾向である","減少","増加","正解：減少\nプリント参照"],
+["1","令和4年保険種別訪問看護ST利用者数割合を見ると利用者全体の人数は約111慢人でありそのうち健康保険法で利用している割合は約（　）％であり、介護保険法で利用してる割合は約６５％である","35","正解：35\nプリント参照"],
+["1","令和4年保険種別訪問看護ST利用者数割合を見ると利用者全体の人数は約111慢人でありそのうち健康保険法で利用している割合は約35％であり、介護保険法で利用してる割合は約（　）％である","65","正解：65\nプリント参照"],
+["1","健康保険法では一部公費負担と全負担があり、一部負担には「難病法」の指定難病・「（　　　　　　）」（身体障碍者の厚生医療、障害児の育成医療、精神障碍者の精神通院医療）、全負担には「生活保護」、被爆者の訪問看護があります。","自立支援医療","正解：自立支援医療/nプリント参照"],
+["1","健康保険法では一部公費負担と全負担があり、一部負担には「（　　　）」の指定難病・「自立支援医療」（身体障碍者の厚生医療、障害児の育成医療、精神障碍者の精神通院医療）、全負担には「生活保護」、被爆者の訪問看護があります。","難病法","正解：難病法/nプリント参照"],
+["1","健康保険法では一部公費負担と全負担があり、一部負担には「難病法」の指定難病・「自立支援医療」（身体障碍者の厚生医療、障害児の育成医療、精神障碍者の精神通院医療）、全負担には「（　　　　）」、被爆者の訪問看護があります。","生活保護","正解：生活保護/nプリント参照"],
+["1","健康保険法では一部公費負担と全負担があり、一部負担には「難病法」の指定難病・「自立支援医療」（身体障碍者の厚生医療、障害児の育成医療、精神障碍者の精神通院医療）、全負担には「生活保護」、（　　　）の訪問看護があります。","被爆者","正解：被爆者/nプリント参照"],
+["1","訪問看護は新生児から高齢者までを対象としているが年齢別に最も多い利用者数は（　　　）歳である。また65歳以上の高齢者が約7割を占めます。","80～89","正解：80～89\nプリント参照"],
+["1","訪問看護は新生児から高齢者までを対象としているが年齢別に最も多い利用者数は80～89歳である。また65歳以上の高齢者が約（　）割を占めます。","7","正解：7\nプリント参照"],
+["1","訪問看護ＳＴ利用者の疾病割合として一番多いのは（　　　　　　）であり、二番目は精神行動障害である","循環器系疾患","正解：循環器系疾患\nプリント参照"],
+["1","訪問看護ＳＴ利用者の疾病割合として一番多いのは循環器系疾患であり、二番目は（　　　　　　）である","精神行動障害","正解：精神行動障害\nプリント参照"],
+["1","訪問看護にはレベル別にみて4つの対象者がいる。（　　　　）は要支援1，2の内相が要介護状態にならないようにすることである","予防目的","正解：予防目的\nプリント参照"],
+["1","訪問看護にはレベル別にみて4つの対象者がいる。（　　　　　　　）ものにセルフケアや家族のケアを行う","慢性疾患を持つ","正解：慢性疾患を持つ\nプリント参照"],
+["1","訪問看護にはレベル別にみて4つの対象者がいる。（　　　）にある人には全人的ケアなどが必要である","終末期","正解：終末期\nプリント参照"],
+["1","訪問看護にはレベル別にみて4つの対象者がいる。（　　　　　　）ものには家族など、現状健康であっても健康を維持できるようにする必要がある","健康である","正解：健康である\nプリント参照"],
+["1","看護保険で訪問看護を利用している人の割合で一番多い疾患は循環器系疾患の（　　　　　）である","脳血管疾患","正解：脳血管疾患\nプリント参照"],
+["1","健康保険で訪問看護を利用している人の割合で維持版多い疾患は（　　　　　　）である","精神行動障害","正解：精神行動障害\nプリント参照"],
+["1","対象者の障害レベルは（　　　　　　　　　　　　　　　　　）により判断する","障害高齢者の日常生活自立度判定基準","正解：障害高齢者の自立度判断基準\nプリント参照"],
+["1","住宅ケアを支える訪問看護ステーションの管理者は（　　　）、看護師、助産師で人員常勤換算で2.5人の人員が必要である","保険師","正解：保険師\nプリント参照"],
+["1","住宅ケアを支える訪問看護ステーションの管理者は保険師、（　　　）、助産師で人員常勤換算で2.5人の人員が必要である","看護師","正解：看護師\nプリント参照"],
+["1","住宅ケアを支える訪問看護ステーションの管理者は保険師、看護師、（　　　）で人員常勤換算で2.5人の人員が必要である","助産師","正解：助産師\nプリント参照"],
+["1","住宅ケアを支える訪問看護ステーションの管理者は保険師、看護師、助産師で人員常勤換算で（　　　）人の人員が必要である","2.5","正解：2.5\nプリント参照"],
+["1","医療保険では訪問看護の利用料金の（　　）を負担しなければいけない","1割","正解：一割\nプリント参照"],
+["1","後期高齢者医療では訪問看護の利用上限は（　　　　　）による","支給限度額","正解：支給限度額\nプリント参照"],
+["1","医療依存度が高く、デイサービスでは対応しきれない療養者に対するケアを行う場所を（　　　　　　）という","療養通所介護","正解：療養通所介護\nプリント参照"],
+["1","療養通所介護の人員配置は利用者（　　）人に対して看護師介護職員1人異常が必要である","1.5","正解：1.5\nプリント参照"],
+["1","療養通所介護の人員配置は利用者1.5人に対して看護師介護職員（　）人異常が必要である","1","正解：1\nプリント参照"],
+["1","保険・医療・福祉の専門家や機関が相互に協力し合い、総合的な福祉サービスを示すことを（　　　　　　　）という","ケアマネジメント","正解：ケアマネジメント\nプリント参照"],
+["1","介護保険制度下で、個々人の多様な要求に対応し、各種サービスを調整して適切で効果的なケアを提供することを（　　　　　　　　）という","ケースマネジメント","正解：ケースマネジメント\nプリント参照"],
+["1","受理・初回面談を行うことを（　　　　　）という","インテーク","正解：インテーク\nプリント参照"],
+["1","情報収集のことを（　　　　　　　）という","スクリーニング","正解：スクリーニング\nプリント参照"],
+["1","介護サービス計画書を（　　　　　）という","ケアプラン","正解：ケアプラン\nプリント参照"],
+["1","(　　　　　　　　　）はケアプランの決定を行う","サービス担当者会議","正解：サービス担当者会議\nプリント参照"],
+["1","評価のことを（　　　　　　）という","モニタニング","正解：モニタニング\nプリント参照"],
+["1","家族、地域住民、医療・福祉の専門職などが協力して、当事者をも守ることを（　　　　　　　　）という","権利擁護支援チーム","正解：権利擁護支援チーム\nプリント参照"],
+["1","認知症、知的障害、精神障害などを理由に（　　　　）や身上保護など法律を一人で行うのが難しい場合、法的に保護し、本人の意思を尊重した意思決定支援を行う制度を成年後見人制度という","財産管理","正解：財産管理\nプリント参照"],
+["1","認知症、知的障害、精神障害などを理由に財産管理や（　　　　）など法律を一人で行うのが難しい場合、法的に保護し、本人の意思を尊重した意思決定支援を行う制度を成年後見人制度という","身上保護","正解：身上保護\nプリント参照"],
+["1","認知症、知的障害、精神障害などを理由に財産管理や身上保護など法律を一人で行うのが難しい場合、（　　）に保護し、本人の意思を尊重した意思決定支援を行う制度を成年後見人制度という","法的","正解：法的\nプリント参照"],
+["1","認知症、知的障害、精神障害などを理由に財産管理や身上保護など法律を一人で行うのが難しい場合、法的に保護し、本人の（　　）を尊重した意思決定支援を行う制度を成年後見人制度という","意思","正解：意思\nプリント参照"],
+["1","認知症、知的障害、精神障害などを理由に財産管理や身上保護など法律を一人で行うのが難しい場合、法的に保護し、本人の意思を尊重した意思決定支援を行う制度を成年後見人制度という","成年後見人制度","正解：\nプリント参照"],
+["1","判断が著しく低下した際、（　　　）により後見人等を認定する仕組みを法定後見人制度という","裁判所","正解：裁判所\nプリント参照"],
+["1","判断が著しく低下した際、裁判所により後見人等を認定する仕組みを（　　　　　　　）という","法定後見人制度","正解：法定後見人制度\nプリント参照"],
+["1","判断能力があるうちに本人が任意後見をあらかじめ選定しておく仕組みを（　　　　　）という。契約は公証人の作成する公正証書によって結ぶ","任意後見人制度","正解：任意後見人制度\nプリント参照"],
+["1","判断能力があるうちに本人が任意後見を（　　　　　　　）しておく仕組みを任意後見人制度という。契約は公証人の作成する公正証書によって結ぶ","あらかじめ選定","正解：あらかじめ選定\nプリント参照"],
+["1","判断能力があるうちに本人が任意後見をあらかじめ選定しておく仕組みを任意後見人制度という。契約は（　　　）の作成する公正証書によって結ぶ","公証人","正解：公証人\nプリント参照"],
+["1","権限を与えられた（　　　　　　）のこと。市民の権利と利益を守る代理人として行政の環指をお来ぬ任務にあたる職を指す言葉をオンブズマン制度という","代理人・弁護人","正解：代理人・弁護人\nプリント参照"],
+["1","権限を与えられた代理人・弁護人のこと。市民の権利と利益を守る代理人として行政の環指をお来ぬ任務にあたる職を指す言葉を（　　　　　　）制度という","オンブズマン","正解：オンブズマン制度\nプリント参照"],
+["1","要介護認定を受けた要介護者は（　　　）万人弱いる","700","正解：700\nプリント参照"],
+["1","第一号被保険者のうち要介護者は（　）割を占める","2","正解：2\nプリント参照"],
+["1","要介護認定を受けているもので介護サービスを利用したものは約（　　）万人である","400","正解：400\nプリント参照"],
+["1","要介護1～5では状態維持のものが（　　　）割である","8～9","正解：8～9\nプリント参照"],
+["1","災害発生直後から72時間の期間活動できる医療機関をなんという","ＤＭＡＴ","正解：ＤＭＡＴ\nプリント参照"],
+["1","災害発生時、精神医療及び精神保健活動の支援を行う専門チームを何というか","ＤＰＡＴ","正解：ＤＰＡＴ\nプリント参照"],
+["1","災害（　　　）の死者数のうち70歳以上が約8割を占める","関連死","正解：関連死\nプリント参照"],
+["1","災害関連死の死者数のうち（　　）歳以上が約8割を占める","70","正解：70\nプリント参照"],
+["1","災害関連死の死者数のうち70歳以上が約（　）割を占める","8","正解：8\nプリント参照"],
+["1","災害の静穏期は災害が発生しない時期であり、（　　）をする時期である。医療者自身が災害対策について考え行動化することが重要である。訪問看護師は災害発生時の状況を具体的に想定し、備えや災害時の行動について支援する。また各自治体で出しているハザードマップを確認する必要がある。","備え","正解：備え\nプリント参照"],
+["1","災害の静穏期は災害が発生しない時期であり、備えをする時期である。医療者自身が災害対策について考え（　　　）することが重要である。訪問看護師は災害発生時の状況を具体的に想定し、備えや災害時の行動について支援する。また各自治体で出しているハザードマップを確認する必要がある。","行動化","正解：行動化\nプリント参照"],
+["1","災害の静穏期は災害が発生しない時期であり、備えをする時期である。医療者自身が災害対策について考え行動化することが重要である。訪問看護師は災害発生時の状況を具体的に想定し、備えや災害時の行動について支援する。また各自治体で出している（　　　　　　）を確認する必要がある。","ハザードマップ","正解：ハザードマップ\nプリント参照"],
+["1","介護保険法で定められる（　　　　　）には癌、関節リウマチ、筋委縮性側索硬化症、後十字靭帯骨化症、骨折を伴う骨粗鬆症、初老期における認知症、進行性核上性麻痺、大脳皮質基底核変性症、パーキンソン病、脊髄小脳変性症、脊柱管狭窄症、総労相、多系統萎縮症、糖尿病性神経障害、糖尿病性神経障害、糖尿病性腎症及び糖尿病性網膜症、脳血管疾患、ＡＳＯ、ＰＯＣＤ、両側の膝関節または股関節に著しい変形を伴う変形し柄膝関節症などがある","特定疾患","正解：特定疾患\nプリント参照"],
+["1","高齢者虐待は診察や訪問看護の時に発見することも多く（　　　　　　　　）という法律も存在する","高齢者虐待防止法","正解：高齢者虐待防止法\nプリント参照"],
+["1","高齢者虐待は（　　　）、心理的、ネグレクト、性的、経済的の五つがある","身体的","正解：身体的\nプリント参照"],
+["1","高齢者虐待は身体的、（　　　）、ネグレクト、性的、経済的の五つがある","心理的","正解：心理的\nプリント参照"],
+["1","高齢者虐待は身体的、心理的、（　　　　　）、性的、経済的の五つがある","ネグレクト","正解：ネグレクト\nプリント参照"],
+["1","高齢者虐待は身体的、心理的、ネグレクト、（　　）、経済的の五つがある","性的","正解：性的\nプリント参照"],
+["1","高齢者虐待は身体的、心理的、ネグレクト、性的、（　　　）の五つがある","経済的","正解：経済的\nプリント参照"],
+["1","高齢者虐待は（　　　　　）によるものも含む","施設職員","正解：施設職員\nプリント参照"],
+["1","高齢者虐待の加害者の続柄で一番多いのは（　　）（4割）である","息子","正解：息子\nプリント参照"],
+["1","高齢者虐待は（　　）やケアマネに通報されることが多い","警察","正解：警察\nプリント参照"],
+["1","高齢者虐待は警察や（　　　　）に通報されることが多い","ケアマネ","正解：ケアマネ\nプリント参照"],
+["1","施設等での相談、通報件数の（　）割は虐待である","3","正解：3\nプリント参照"],
+
+];
+
+// ===================== アプリ状態 =====================
+let questions = [];
+let currentIdx = 0;
+let score = 0;
+let total = 0;
+let answered = false;
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function goToCount() {
+  document.getElementById('total-label').textContent = `全 ${monndai.length} 問から出題`;
+  showScreen('count-screen');
+  document.getElementById('count-input').focus();
+}
+
+function startQuiz() {
+  const val = parseInt(document.getElementById('count-input').value);
+  if (!val || val < 1) {
+    alert('1以上の数字を入力してください。');
+    return;
+  }
+  total = Math.min(val, monndai.length);
+  score = 0;
+  currentIdx = 0;
+  answered = false;
+  questions = shuffle([...monndai]).slice(0, total);
+  showScreen('quiz-screen');
+  renderQuestion();
+}
+
+function renderQuestion() {
+  answered = false;
+  const q = questions[currentIdx];
+  const type = q[0];
+
+  // progress
+  const pct = (currentIdx / total) * 100;
+  document.getElementById('prog-fill').style.width = pct + '%';
+  document.getElementById('prog-label').textContent = `${currentIdx + 1} / ${total}`;
+
+  // badge
+  const badge = document.getElementById('qtype-badge');
+  const typeMap = {'1':'穴埋め問題','2':'4択問題','3':'〇✕問題','5':'2択問題'};
+  badge.textContent = typeMap[type] || '問題';
+  badge.className = `qtype-badge qtype-${type}`;
+
+  // question
+  document.getElementById('question-text').textContent = `第${currentIdx+1}問　${q[1]}`;
+
+  // hide explanation
+  const expEl = document.getElementById('explanation');
+  expEl.classList.remove('visible');
+  document.getElementById('btn-next').classList.remove('visible');
+
+  const area = document.getElementById('answer-area');
+  area.innerHTML = '';
+
+  if (type === '2') {
+    // 4択
+    const choices = shuffle([q[2], q[3], q[4], q[5]]);
+    const div = document.createElement('div');
+    div.className = 'choices';
+    choices.forEach(c => {
+      const btn = document.createElement('button');
+      btn.className = 'choice-btn';
+      btn.textContent = c;
+      btn.onclick = () => judgeType2(btn, c, q[2], q, div);
+      div.appendChild(btn);
+    });
+    area.appendChild(div);
+  } else if (type === '3') {
+    // 〇✕
+    const correctBtn = q[2]; // "b1"=〇 "b2"=✕
+    const row = document.createElement('div');
+    row.className = 'tf-row';
+    const maru = document.createElement('button');
+    maru.className = 'tf-btn'; maru.textContent = '〇';
+    maru.onclick = () => judgeType3(maru, 'b1', correctBtn, q, row);
+    const batsu = document.createElement('button');
+    batsu.className = 'tf-btn'; batsu.textContent = '✕';
+    batsu.onclick = () => judgeType3(batsu, 'b2', correctBtn, q, row);
+    row.appendChild(maru); row.appendChild(batsu);
+    area.appendChild(row);
+  } else if (type === '1') {
+    // 穴埋め
+    const row = document.createElement('div');
+    row.className = 'fill-row';
+    const input = document.createElement('input');
+    input.className = 'fill-input'; input.type = 'text';
+    input.placeholder = '回答を入力…';
+    input.onkeydown = (e) => { if (e.key === 'Enter') judgeType1(input, q); };
+    const btn = document.createElement('button');
+    btn.className = 'btn-submit'; btn.textContent = '回答する';
+    btn.onclick = () => judgeType1(input, q);
+    row.appendChild(input); row.appendChild(btn);
+    area.appendChild(row);
+    setTimeout(() => input.focus(), 50);
+  } else if (type === '5') {
+    // 2択
+    const choices = shuffle([
+      {label: q[2], val: '2'},
+      {label: q[3], val: '3'}
+    ]);
+    const div = document.createElement('div');
+    div.className = 'choices';
+    choices.forEach(c => {
+      const btn = document.createElement('button');
+      btn.className = 'choice-btn';
+      btn.textContent = c.label;
+      btn.onclick = () => judgeType5(btn, c.val, q, div);
+      div.appendChild(btn);
+    });
+    area.appendChild(div);
+  }
+}
+
+function showExplanation(isCorrect, explanationText) {
+  answered = true;
+  const expEl = document.getElementById('explanation');
+  const lbl = document.getElementById('result-label');
+  lbl.textContent = isCorrect ? '正解！🎉' : '不正解…';
+  lbl.className = 'result-label ' + (isCorrect ? 'correct' : 'wrong');
+  document.getElementById('explanation-text').textContent = explanationText;
+  expEl.classList.add('visible');
+  document.getElementById('btn-next').classList.add('visible');
+  expEl.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+function judgeType2(clickedBtn, selected, correct, q, container) {
+  if (answered) return;
+  const isCorrect = selected === correct;
+  if (isCorrect) score++;
+  container.querySelectorAll('.choice-btn').forEach(b => {
+    b.disabled = true;
+    if (b.textContent === correct) b.classList.add('correct');
+    else if (b === clickedBtn && !isCorrect) b.classList.add('wrong');
+  });
+  showExplanation(isCorrect, q[6]);
+}
+
+function judgeType3(clickedBtn, selected, correct, q, container) {
+  if (answered) return;
+  const isCorrect = selected === correct;
+  if (isCorrect) score++;
+  // find explanation: it can be at index 3 or 5 depending on data format
+  const expl = q[3] || q[5] || '';
+  container.querySelectorAll('.tf-btn').forEach(b => {
+    b.disabled = true;
+    const isCircle = b.textContent === '〇';
+    const btnKey = isCircle ? 'b1' : 'b2';
+    if (btnKey === correct) b.classList.add('correct');
+    else if (b === clickedBtn && !isCorrect) b.classList.add('wrong');
+  });
+  showExplanation(isCorrect, expl);
+}
+
+function judgeType1(input, q) {
+  if (answered) return;
+  const userAns = input.value.trim();
+  if (!userAns) return;
+  // Use flexible matching (normalize)
+  const normalize = s => s.replace(/\s/g,'').toLowerCase();
+  const isCorrect = normalize(userAns) === normalize(q[2]);
+  if (isCorrect) score++;
+  input.disabled = true;
+  input.classList.add(isCorrect ? 'correct' : 'wrong');
+  input.nextElementSibling.disabled = true;
+  showExplanation(isCorrect, q[3]);
+}
+
+function judgeType5(clickedBtn, selected, q, container) {
+  if (answered) return;
+  const isCorrect = selected === '2'; // index 2 is correct choice
+  if (isCorrect) score++;
+  container.querySelectorAll('.choice-btn').forEach(b => {
+    b.disabled = true;
+    if (b.textContent === q[2]) b.classList.add('correct');
+    else if (b === clickedBtn && !isCorrect) b.classList.add('wrong');
+  });
+  showExplanation(isCorrect, q[4]);
+}
+
+function nextQuestion() {
+  currentIdx++;
+  if (currentIdx >= total) {
+    showResult();
+  } else {
+    renderQuestion();
+    document.getElementById('quiz-card').scrollIntoView({behavior:'smooth', block:'start'});
+  }
+}
+
+function showResult() {
+  const pct = Math.round((score / total) * 100);
+  document.getElementById('score-num').textContent = pct;
+  document.getElementById('score-denom').textContent = `/ 100点`;
+  document.getElementById('prog-fill').style.width = '100%';
+
+  let hyouka, sub;
+  if (pct === 100) { hyouka = '満点合格おめでとう！！🎊'; sub = '完璧です！素晴らしい！'; }
+  else if (pct >= 80) { hyouka = 'おしい！あと少しで満点！'; sub = `正解数: ${score} / ${total}`; }
+  else if (pct >= 60) { hyouka = '合格おめでとう！！'; sub = `正解数: ${score} / ${total}`; }
+  else if (pct >= 50) { hyouka = '惜しい！もう少しで合格！'; sub = 'もう一回チャレンジしてね！'; }
+  else if (pct <= 10) { hyouka = '本当に勉強してる!？😅'; sub = '頑張れ！'; }
+  else { hyouka = '勉強してからもう一度！'; sub = `正解数: ${score} / ${total}`; }
+
+  document.getElementById('hyouka-text').textContent = hyouka;
+  document.getElementById('hyouka-sub').textContent = sub;
+  showScreen('result-screen');
+}
+
+function restart() {
+  document.getElementById('count-input').value = '';
+  showScreen('count-screen');
+  document.getElementById('count-input').focus();
+}
+</script>
+</body>
+</html>
