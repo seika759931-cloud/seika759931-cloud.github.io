@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>循環器外科 クイズ</title>
+<style>
+  :root {
+    --bg: #f0f4f8;
+    --card: #ffffff;
+    --primary: #2c6fad;
+    --primary-dark: #1a4f80;
+    --accent: #e05577;
+    --correct: #27ae60;
+    --wrong: #e74c3c;
+    --text: #1a2533;
+    --muted: #6b7c93;
+    --border: #d0dce8;
+    --yellow: #fff591;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  /* ===== SCREENS ===== */
+  .screen { display: none; width: 100%; max-width: 700px; }
+  .screen.active { display: flex; flex-direction: column; align-items: center; }
+
+  /* ===== HOME ===== */
+  #home-screen {
+    text-align: center;
+    gap: 28px;
+  }
+  .home-title {
+    font-size: 3.5rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    color: var(--primary);
+    line-height: 1;
+  }
+  .home-subtitle {
+    font-size: 1rem;
+    color: var(--muted);
+    margin-top: -10px;
+  }
+  .home-badge {
+    display: inline-block;
+    background: var(--primary);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    padding: 4px 12px;
+    border-radius: 20px;
+    text-transform: uppercase;
+  }
+
+  /* ===== COUNT SCREEN ===== */
+  #count-screen { gap: 24px; }
+  .count-card {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 36px 40px;
+    box-shadow: 0 4px 20px rgba(44,111,173,0.10);
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .count-card h2 { font-size: 1.4rem; color: var(--primary); }
+  .count-card p { font-size: 0.9rem; color: var(--muted); }
+  .count-input {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 1.3rem;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    outline: none;
+    text-align: center;
+    transition: border-color 0.2s;
+  }
+  .count-input:focus { border-color: var(--primary); }
+  .total-count { color: var(--muted); font-size: 0.85rem; text-align: right; }
+
+  /* ===== QUIZ SCREEN ===== */
+  #quiz-screen { gap: 20px; width: 100%; max-width: 760px; }
+  .progress-bar-wrap {
+    width: 100%;
+    background: var(--border);
+    border-radius: 99px;
+    height: 8px;
+  }
+  .progress-bar-fill {
+    height: 8px;
+    background: linear-gradient(90deg, var(--primary), #5ba4d9);
+    border-radius: 99px;
+    transition: width 0.4s ease;
+  }
+  .progress-label {
+    font-size: 0.8rem;
+    color: var(--muted);
+    width: 100%;
+    text-align: right;
+  }
+  .quiz-card {
+    background: var(--card);
+    border-radius: 18px;
+    padding: 36px 40px;
+    box-shadow: 0 4px 24px rgba(44,111,173,0.10);
+    width: 100%;
+  }
+  .qtype-badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-bottom: 16px;
+    text-transform: uppercase;
+  }
+  .qtype-1 { background: #e8f4fd; color: #2c6fad; }
+  .qtype-2 { background: #edf9f0; color: #27ae60; }
+  .qtype-3 { background: #fef3cd; color: #c07c00; }
+  .qtype-5 { background: #f3e8fd; color: #7b2dad; }
+  .question-text {
+    font-size: 1.15rem;
+    line-height: 1.7;
+    font-weight: 600;
+    margin-bottom: 28px;
+    color: var(--text);
+  }
+
+  /* choices */
+  .choices { display: flex; flex-direction: column; gap: 10px; }
+  .choice-btn {
+    display: block;
+    width: 100%;
+    padding: 14px 20px;
+    background: #f6f9fc;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    font-size: 1rem;
+    font-family: inherit;
+    color: var(--text);
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.15s;
+  }
+  .choice-btn:hover:not(:disabled) {
+    background: #e8f2fc;
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+  .choice-btn.correct { background: #d4f5e2; border-color: var(--correct); color: #1a6e3e; font-weight: 700; }
+  .choice-btn.wrong   { background: #fde8e8; border-color: var(--wrong);   color: #8b1a1a; }
+  .choice-btn:disabled { cursor: default; }
+
+  /* true/false */
+  .tf-row { display: flex; gap: 16px; justify-content: center; margin-top: 8px; }
+  .tf-btn {
+    width: 140px;
+    height: 80px;
+    font-size: 2rem;
+    border: 2px solid var(--border);
+    border-radius: 14px;
+    background: #f6f9fc;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .tf-btn:hover:not(:disabled) { background: #e8f2fc; border-color: var(--primary); }
+  .tf-btn.correct { background: #d4f5e2; border-color: var(--correct); }
+  .tf-btn.wrong   { background: #fde8e8; border-color: var(--wrong); }
+  .tf-btn:disabled { cursor: default; }
+
+  /* fill-in */
+  .fill-row { display: flex; gap: 10px; align-items: center; }
+  .fill-input {
+    flex: 1;
+    padding: 12px 16px;
+    font-size: 1.1rem;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    outline: none;
+    font-family: inherit;
+    transition: border-color 0.2s;
+  }
+  .fill-input:focus { border-color: var(--primary); }
+  .fill-input.correct { border-color: var(--correct); background: #d4f5e2; }
+  .fill-input.wrong   { border-color: var(--wrong);   background: #fde8e8; }
+
+  /* ===== EXPLANATION ===== */
+  .explanation {
+    display: none;
+    margin-top: 20px;
+    padding: 20px 24px;
+    border-radius: 12px;
+    background: var(--yellow);
+    border-left: 5px solid var(--accent);
+    font-size: 0.95rem;
+    line-height: 1.7;
+    white-space: pre-line;
+  }
+  .explanation.visible { display: block; }
+  .result-label {
+    font-size: 1.4rem;
+    font-weight: 800;
+    margin-bottom: 8px;
+  }
+  .result-label.correct { color: var(--correct); }
+  .result-label.wrong   { color: var(--wrong); }
+
+  /* ===== RESULT SCREEN ===== */
+  #result-screen { gap: 24px; text-align: center; }
+  .result-card {
+    background: var(--card);
+    border-radius: 18px;
+    padding: 48px 40px;
+    box-shadow: 0 4px 24px rgba(44,111,173,0.10);
+    width: 100%;
+  }
+  .score-circle {
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), #5ba4d9);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 24px;
+    box-shadow: 0 8px 30px rgba(44,111,173,0.3);
+  }
+  .score-num { font-size: 3rem; font-weight: 900; line-height: 1; }
+  .score-denom { font-size: 1rem; opacity: 0.8; }
+  .hyouka-text { font-size: 1.5rem; font-weight: 700; margin-bottom: 8px; color: var(--primary); }
+  .hyouka-sub  { font-size: 0.9rem; color: var(--muted); }
+
+  /* ===== BUTTONS ===== */
+  .btn-primary {
+    padding: 16px 48px;
+    font-size: 1.15rem;
+    font-weight: 700;
+    font-family: inherit;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    box-shadow: 0 4px 16px rgba(44,111,173,0.25);
+  }
+  .btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-next {
+    margin-top: 20px;
+    padding: 12px 36px;
+    font-size: 1rem;
+    font-weight: 700;
+    font-family: inherit;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s;
+    display: none;
+  }
+  .btn-next.visible { display: inline-block; }
+  .btn-next:hover { background: #c03060; }
+  .btn-submit {
+    padding: 12px 32px;
+    font-size: 1rem;
+    font-weight: 700;
+    font-family: inherit;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s;
+    white-space: nowrap;
+  }
+  .btn-submit:hover { background: var(--primary-dark); }
+  .btn-submit:disabled { background: var(--border); cursor: default; }
+</style>
+</head>
+<body>
+
+<!-- HOME -->
+<div id="home-screen" class="screen active">
+  <span class="home-badge">医療系国試対策</span>
+  <h1 class="home-title">循環器外科</h1>
+  <p class="home-subtitle">ランダム出題クイズ</p>
+  <button class="btn-primary" onclick="goToCount()">スタート</button>
+</div>
+
+<!-- COUNT -->
+<div id="count-screen" class="screen">
+  <div class="count-card">
+    <h2>問題数を選んでください</h2>
+    <input class="count-input" type="number" id="count-input" min="1" placeholder="例: 10"
+      onkeydown="if(event.key==='Enter') startQuiz()">
+    <p class="total-count" id="total-label"></p>
+    <p>数字を入力してください（英数字は半角で）</p>
+    <button class="btn-primary" onclick="startQuiz()">問題へ</button>
+  </div>
+</div>
+
+<!-- QUIZ -->
+<div id="quiz-screen" class="screen">
+  <div class="progress-bar-wrap">
+    <div class="progress-bar-fill" id="prog-fill" style="width:0%"></div>
+  </div>
+  <div class="progress-label" id="prog-label">0 / 0</div>
+  <div class="quiz-card" id="quiz-card">
+    <span class="qtype-badge" id="qtype-badge"></span>
+    <div class="question-text" id="question-text"></div>
+    <div id="answer-area"></div>
+    <div class="explanation" id="explanation">
+      <div class="result-label" id="result-label"></div>
+      <div id="explanation-text"></div>
+    </div>
+    <div style="text-align:right">
+      <button class="btn-next" id="btn-next" onclick="nextQuestion()">次の問題 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- RESULT -->
+<div id="result-screen" class="screen">
+  <div class="result-card">
+    <div class="score-circle">
+      <div class="score-num" id="score-num">0</div>
+      <div class="score-denom" id="score-denom">/ 0点</div>
+    </div>
+    <div class="hyouka-text" id="hyouka-text"></div>
+    <div class="hyouka-sub" id="hyouka-sub"></div>
+  </div>
+  <button class="btn-primary" onclick="restart()">もう一度挑戦</button>
+</div>
+
+<script>
+// ===================== 問題データ =====================
+const monndai = [
+   ["2","通常の生理的なペースメーカはどこにあるか","右心房の上","心臓中隔","右心室の中","左心室の筋の中","正解：右心房の上\n過去問の改変"],
+    ["2","胸部エックス線写真の心臓胸郭比について正しいものはどれか","心臓の大きさが胸郭の1/3以上になると心肥大を認める","心臓の大きさが胸郭の1/3以上になると心萎縮を認める","心臓の大きさが胸郭の1/3以上であると正常である","心臓は個体によって大きさが大きく異なるためエックス線写真では心肥大を断定できない","正解：心臓の大きさが胸郭の1/3以上になると心肥大を認める\n過去問の改変"],
+    ["2","植込み型除細動器（ICD）装着患者の退院時の指導で正しいのはどれか","心臓機能障害の認定を受けることができる","病院で検査を受ける際に、ICDの装着を申告する必要はない","ICD装着後は電池の入れ替えの必要はない","運動など身体活動の制限はない","正解：心機能障害の認定を受けることができる\n過去問参照"],
+    ["2","狭心症による共通の持続時間で適切なのはどれか","5分","5秒","50分","5時間","正解：5分\n過去問参照"],
+    ["2","狭心症の治療に用いるくするはどれか","抗血小板薬","アンジオテンシンⅡ受容体拮抗薬","スルホニル尿素薬","ジギタリス製剤","正解：抗血小板薬\n過去問参照"],
+    ["2","狭心症の治療に用いるくするはどれか","硝酸薬","アンジオテンシンⅡ受容体拮抗薬","スルホニル尿素薬","ジギタリス製剤","正解：硝酸薬\n過去問参照"],
+    ["2","急性心不全患者の心臓の負担を減らす体位はどれか","起座位","仰臥位","腹臥位","側臥位","正解：起座位\n過去問参照"],
+    ["2","急性心不全患者の心臓の負担を減らす体位はどれか","ファウラー位","仰臥位","腹臥位","側臥位","正解：ファウラー位\n過去問参照"],
+    ["2","心電図モニターで波形に規則性がない不整脈がみられた。この時の対応で適切なのはどれか","胸骨圧迫を行う","体表面ベーシングを準備する","自覚症状がなければ経過観察をする","自覚症状と血圧を医師に報告して指示を待つ","正解：胸骨圧迫を行う\n過去問の改変"],
+    ["2","Aさん（60歳、男性）は、自宅近くを散歩中に突然の胸痛が出現し、救急車を要請した。救急隊到着時のバイタルサインは、呼吸数28/分、脈拍100/分、血圧80/40ｍｍHg 出会った。冷や汗が著名で、前胸部から左肩にかけて激痛を訴えていた。問診で狭心症の既往歴があることがわっかった。入院時の検査で急性心筋梗塞と診断された。検査所見として適切なものはどれか","心電図のST上昇","左肺呼吸音の減弱","クレアチンキナーゼの下降","胸部エックス線写真での心陰影の縮小","正解：心電図のST上昇\n過去問参照"],
+    ["2","Aさん（56歳、男性）はコンビニエンスストアの店長で自動車を運転して通勤している。不規則な生活が続き、ストレスがたまることも多く、十分な睡眠がとれないこともあった。荷物を運ぶときに胸部の圧迫感が繰り返し出現し受診したとろ、狭心症が疑われたため検査をすることになった。脂質異常症の既往がある。Aさんの運動負荷心電図検査（トレッドミル運動負荷試験）の結果と安静時の心電図の検査を行い、現れる可能性が最も高いものはどれか","発作時はST低下がある","発作時はP歯が低下している","安静時は異常Qはがある","安静時は冠性T波がある","正解：発作時はST低下がある\n過去問参照"],
+    ["2","Aさん（48歳、男性、会社員）は8年前から高血圧症、脂質異常症および労作性狭心症に対して内服治療をしていた。胸郭拘束感が時々出現するため、経皮的冠動脈形成術を実施することになった。Aさんは身長165cm、体重80㎏である。午前9時過ぎから左橈骨動脈を穿刺し、狭窄部位である左冠状動脈にステント留置術が行われ、午前11時ごろに終了した。経皮的冠動脈形成術終了後も点滴時静脈内注射が継続され、抗血小板薬と抗菌薬の投与が行われた。その後、看護師はAさんの穿刺部位の出血がないことを確認した。次に監査rつでもっとの注意すべき項目はどれか","麻痺症状","発熱","皮膚の黄染","穿刺部位の感染徴候","正解：麻痺症状\n過去問参照"],
+    ["2","狭窄による血流低下で、二次性高血圧を起こす血管はどれか","腎動脈","冠動脈","肝動脈","頸動脈","正解：腎動脈\n過去問参照"],
+    ["2","心電図で大きい山と大きい山の間隔が異常に長い所見が現れた正しいのはどれか","RーR間隔の不整","QRS波の消失","ST上昇","陰性T波","正解：RーR間隔の不整\n過去問参照"],
+    ["2","心電図で大きい山と大きい山の間隔が異常に長い所見が現れた正しいのはどれか","細動波の出現","QRS波の消失","ST上昇","陰性T波","正解：細動波の出現\n過去問参照"],
+    ["2","心停止の危険性が最も高い心電図はどれか","規則性のない波形","STの間隔が異常に長い","ｐ波の上昇","ＳＴ逆転","正解：規則性のない波形\n過去問の改変"],
+    ["2","最も緊急性の高い不整脈はどれか","心室細動","心房細動","1度房室ブロック","完全右脚ブロック","正解：心室細動\n過去問参照"],
+    ["2","徐脈性不整脈で起こりやすいのはどれか","失神","失語","失行","失明","正解：失神\n過去問参照"],
+    ["2","Aさん６４歳、女性主婦は５０歳で高血圧症と診断され、降圧薬を服用している。栄養指導を受け、食事療法も実施している。趣味はサイクリングと海外旅行である。数か月前からサイクリング中に息苦しさやめまいを感じるようになったため、かかりつけ医から紹介された病院を受診した。外来診察時のバイタルサインは、体温３６．８度、呼吸数24/分血圧96/52ｍｍHg、SpO298％である。検査の閣下Aさんは完全房室ブロックと診断された。今後Aさんに起こりやすいのはどれか","脳虚血","肺塞栓症","不安定狭心症","心タンポナーデ",""],
+    ["2","不整脈について誤っている組み合わせはどれか","完全房室ブロック治療ーーーカテーテルアブレーション","発作性不整脈検査ーーーホルター心電図","心房細動ーーー抗凝固剤の内服","心室細動ーーーAED","正解：完全房室ブロック治療ーーーカテーテルアブレーション\n過去問参照"],
+    ["2","略語で正しいのはどれか","TAVIーーー経カテーテル大動脈弁置換術","ACSーーー急性心筋炎","CRTーーー心肺蘇生","SSSーーー完全房室ブロック","正解：TAVIーーー経カテーテル大動脈弁置換術\n過去問参照"],
+    ["2","急性大動脈解離において緊急手術を行うか同課の観点で用いる分類はどれか","スタンフォード分類","NYHA分類","ドベーキー分類","フォレスター分類","正解：スタンフォード分類\n過去問参照"],
+    ["2","Aさん54歳男性は、10年前に心筋梗塞を発症し、2年前に慢性心不全と診断され外来受診を続けてきた。1週前からトイレ歩行時に息苦しさがあり、4日前から夜に咳と痰とが見られ眠れなくなっていた。本日、Aさんは定期受診のため来院し、心不全の増悪と診断され入院した。入院時、体温36.3度、呼吸数24/分、脈拍/96分、整で血圧124/72ｍｍHgであった。心エコー検査で左室の駆出率28％であった。体重は1週間で4kg増加し下肢の浮腫が見られる。この時のAさんのアセスメントで適切なのはどれか","浮腫は右心不全の状態によると考えられる","ショック状態の可能性が高い","左心不全の症状はみられない","NYHA心機能分類の1度に該当する","正解：浮腫は右心不全の状態によると考えられる\n過去問参照"],
+    ["2","Aさん54歳男性は、10年前に心筋梗塞を発症し、2年前に慢性心不全と診断され外来受診を続けてきた。1週前からトイレ歩行時に息苦しさがあり、4日前から夜に咳と痰とが見られ眠れなくなっていた。本日、Aさんは定期受診のため来院し、心不全の増悪と診断され入院した。入院時、体温36.3度、呼吸数24/分、脈拍/96分、整で血圧124/72ｍｍHgであった。心エコー検査で左室の駆出率28％であった。体重は1週間で4kg増加し下肢の浮腫が見られる。Aさんの咳嗽を軽減する方法で最も適切なのはどれか","起座位を保つ","腹式呼吸を促す","部屋の湿度を30％に保つ","超音波ネブライザーを使用する","正解：起座位を保つ\n過去問参照"],
+    ["2","Aさん54歳男性は、10年前に心筋梗塞を発症し、2年前に慢性心不全と診断され外来受診を続けてきた。1っ週前からトイレ歩行時に息苦しさがあり、4構えから夜に咳と痰とが見られ眠れなくなっていた。本日、Aさんは定期受診のため来院し、心不全の増悪と診断され入院した。入院時、体温36.3度、呼吸数24/分、脈拍/96分、整で血圧124/72ｍｍHgであった。心エコー検査で左室の駆出率28％であった。体重は1週間で4kg増加し下肢の浮腫が見られる。入院治療によりAさんの症状は改善し、二日後に退院予定である。退院後の受診についての説明で最も適切なのはどれか","今回のように体重が増加したときは受診してください","夜間の咳で受診する必要はありません","体温が38.0度以下なら受診の必要はありません","仕事から帰って足に浮腫がみられたら受診してください","正解：今回のように体重が増加したときは受診してください\n過去問参照"],
+    ["2","Aさん50歳、男性、会社員は半年ほど前から労作時に共通と呼吸困難感があり狭心症と診断され内服治療を受けている。本日明け方から胸部に圧迫感があった。出勤途中に強い胸痛を自覚し、自ら救急車を要請した。救急外来到着時のバイタルサインは体温35.8度、呼吸数30/分、脈拍112/分、血圧96/52ｍｍHg、SpO2　93％（酸素2L/分）。意識は清明。12誘導心電図はV１～V4でST上昇、Ⅱ、Ⅲ、aVFでST低下がみられた。救急外来到着時にAさんの状態をアセスメントするために優先度が高い血液検査項目はどれか","トロポニンT","CPK","血清クレアチニン","アスパラギン酸アミノトランスフェラーゼ","正解：トロポニンT\n過去問参照"],
+    ["2","Aさん50歳、男性、会社員は半年ほど前から労作時に共通と呼吸困難感があり狭心症と診断され内服治療を受けている。本日明け方から胸部に圧迫感があった。出勤途中に強い胸痛を自覚し、自ら救急車を要請した。救急外来到着時のバイタルサインは体温35.8度、呼吸数30/分、脈拍112/分、血圧96/52ｍｍHg、SpO2　93％（酸素2L/分）。意識は清明。12誘導心電図はV１～V4でST上昇、Ⅱ、Ⅲ、aVFでST低下がみられた。心臓カテーテル検査の結果、Aさんは急性心筋梗塞と診断された。心係数2.4L/分/m2、肺動脈楔入圧20ｍｍHgでフォレスター分類Ⅱ群であった。身体所見は両側は嫌で呼吸音が減弱しており、軽度の荒い断続性複座久遠が聴取される。心エコー検査では左室駆出率が58％、胸部エックス線検査では心胸郭比48％である。この時のAさんのアセスメントで適切なのはどれか","肺うっ血が起きている","心拡大が認められる","末梢循環不全が起きている","左心室の収縮力が低下している","正解：肺うっ血が起きている\n過去問参照"],
+    ["2","Aさん50歳、男性、会社員は半年ほど前から労作時に共通と呼吸困難感があり狭心症と診断され内服治療を受けている。本日明け方から胸部に圧迫感があった。出勤途中に強い胸痛を自覚し、自ら救急車を要請した。救急外来到着時のバイタルサインは体温35.8度、呼吸数30/分、脈拍112/分、血圧96/52ｍｍHg、SpO2　93％（酸素2L/分）。意識は清明。12誘導心電図はV１～V4でST上昇、Ⅱ、Ⅲ、aVFでST低下がみられた。その後Aさんは経皮的冠動脈形成術を受けた。基質時のバイタルサインは体温36.2度、呼吸数20/分、脈拍58/分、整、血圧80/40ｍｍHg、SpO2　95％（酸素　1L/分）顔面蒼白、冷や汗を認めた。意識は明瞭である。看護師が最初に行うことはどれか","刺入部の出血の有無を確認する","側臥位にする","除細動器の準備を行う","鎮痛薬の処方を医師に相談する","正解：刺入部の出血の有無を確認する\n過去問参照"],
+    
+];
+
+// ===================== アプリ状態 =====================
+let questions = [];
+let currentIdx = 0;
+let score = 0;
+let total = 0;
+let answered = false;
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function goToCount() {
+  document.getElementById('total-label').textContent = `全 ${monndai.length} 問から出題`;
+  showScreen('count-screen');
+  document.getElementById('count-input').focus();
+}
+
+function startQuiz() {
+  const val = parseInt(document.getElementById('count-input').value);
+  if (!val || val < 1) {
+    alert('1以上の数字を入力してください。');
+    return;
+  }
+  total = Math.min(val, monndai.length);
+  score = 0;
+  currentIdx = 0;
+  answered = false;
+  questions = shuffle([...monndai]).slice(0, total);
+  showScreen('quiz-screen');
+  renderQuestion();
+}
+
+function renderQuestion() {
+  answered = false;
+  const q = questions[currentIdx];
+  const type = q[0];
+
+  // progress
+  const pct = (currentIdx / total) * 100;
+  document.getElementById('prog-fill').style.width = pct + '%';
+  document.getElementById('prog-label').textContent = `${currentIdx + 1} / ${total}`;
+
+  // badge
+  const badge = document.getElementById('qtype-badge');
+  const typeMap = {'1':'穴埋め問題','2':'4択問題','3':'〇✕問題','5':'2択問題'};
+  badge.textContent = typeMap[type] || '問題';
+  badge.className = `qtype-badge qtype-${type}`;
+
+  // question
+  document.getElementById('question-text').textContent = `第${currentIdx+1}問　${q[1]}`;
+
+  // hide explanation
+  const expEl = document.getElementById('explanation');
+  expEl.classList.remove('visible');
+  document.getElementById('btn-next').classList.remove('visible');
+
+  const area = document.getElementById('answer-area');
+  area.innerHTML = '';
+
+  if (type === '2') {
+    // 4択
+    const choices = shuffle([q[2], q[3], q[4], q[5]]);
+    const div = document.createElement('div');
+    div.className = 'choices';
+    choices.forEach(c => {
+      const btn = document.createElement('button');
+      btn.className = 'choice-btn';
+      btn.textContent = c;
+      btn.onclick = () => judgeType2(btn, c, q[2], q, div);
+      div.appendChild(btn);
+    });
+    area.appendChild(div);
+  } else if (type === '3') {
+    // 〇✕
+    const correctBtn = q[2]; // "b1"=〇 "b2"=✕
+    const row = document.createElement('div');
+    row.className = 'tf-row';
+    const maru = document.createElement('button');
+    maru.className = 'tf-btn'; maru.textContent = '〇';
+    maru.onclick = () => judgeType3(maru, 'b1', correctBtn, q, row);
+    const batsu = document.createElement('button');
+    batsu.className = 'tf-btn'; batsu.textContent = '✕';
+    batsu.onclick = () => judgeType3(batsu, 'b2', correctBtn, q, row);
+    row.appendChild(maru); row.appendChild(batsu);
+    area.appendChild(row);
+  } else if (type === '1') {
+    // 穴埋め
+    const row = document.createElement('div');
+    row.className = 'fill-row';
+    const input = document.createElement('input');
+    input.className = 'fill-input'; input.type = 'text';
+    input.placeholder = '回答を入力…';
+    input.onkeydown = (e) => { if (e.key === 'Enter') judgeType1(input, q); };
+    const btn = document.createElement('button');
+    btn.className = 'btn-submit'; btn.textContent = '回答する';
+    btn.onclick = () => judgeType1(input, q);
+    row.appendChild(input); row.appendChild(btn);
+    area.appendChild(row);
+    setTimeout(() => input.focus(), 50);
+  } else if (type === '5') {
+    // 2択
+    const choices = shuffle([
+      {label: q[2], val: '2'},
+      {label: q[3], val: '3'}
+    ]);
+    const div = document.createElement('div');
+    div.className = 'choices';
+    choices.forEach(c => {
+      const btn = document.createElement('button');
+      btn.className = 'choice-btn';
+      btn.textContent = c.label;
+      btn.onclick = () => judgeType5(btn, c.val, q, div);
+      div.appendChild(btn);
+    });
+    area.appendChild(div);
+  }
+}
+
+function showExplanation(isCorrect, explanationText) {
+  answered = true;
+  const expEl = document.getElementById('explanation');
+  const lbl = document.getElementById('result-label');
+  lbl.textContent = isCorrect ? '正解！🎉' : '不正解…';
+  lbl.className = 'result-label ' + (isCorrect ? 'correct' : 'wrong');
+  document.getElementById('explanation-text').textContent = explanationText;
+  expEl.classList.add('visible');
+  document.getElementById('btn-next').classList.add('visible');
+  expEl.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+function judgeType2(clickedBtn, selected, correct, q, container) {
+  if (answered) return;
+  const isCorrect = selected === correct;
+  if (isCorrect) score++;
+  container.querySelectorAll('.choice-btn').forEach(b => {
+    b.disabled = true;
+    if (b.textContent === correct) b.classList.add('correct');
+    else if (b === clickedBtn && !isCorrect) b.classList.add('wrong');
+  });
+  showExplanation(isCorrect, q[6]);
+}
+
+function judgeType3(clickedBtn, selected, correct, q, container) {
+  if (answered) return;
+  const isCorrect = selected === correct;
+  if (isCorrect) score++;
+  // find explanation: it can be at index 3 or 5 depending on data format
+  const expl = q[3] || q[5] || '';
+  container.querySelectorAll('.tf-btn').forEach(b => {
+    b.disabled = true;
+    const isCircle = b.textContent === '〇';
+    const btnKey = isCircle ? 'b1' : 'b2';
+    if (btnKey === correct) b.classList.add('correct');
+    else if (b === clickedBtn && !isCorrect) b.classList.add('wrong');
+  });
+  showExplanation(isCorrect, expl);
+}
+
+function judgeType1(input, q) {
+  if (answered) return;
+  const userAns = input.value.trim();
+  if (!userAns) return;
+  // Use flexible matching (normalize)
+  const normalize = s => s.replace(/\s/g,'').toLowerCase();
+  const isCorrect = normalize(userAns) === normalize(q[2]);
+  if (isCorrect) score++;
+  input.disabled = true;
+  input.classList.add(isCorrect ? 'correct' : 'wrong');
+  input.nextElementSibling.disabled = true;
+  showExplanation(isCorrect, q[3]);
+}
+
+function judgeType5(clickedBtn, selected, q, container) {
+  if (answered) return;
+  const isCorrect = selected === '2'; // index 2 is correct choice
+  if (isCorrect) score++;
+  container.querySelectorAll('.choice-btn').forEach(b => {
+    b.disabled = true;
+    if (b.textContent === q[2]) b.classList.add('correct');
+    else if (b === clickedBtn && !isCorrect) b.classList.add('wrong');
+  });
+  showExplanation(isCorrect, q[4]);
+}
+
+function nextQuestion() {
+  currentIdx++;
+  if (currentIdx >= total) {
+    showResult();
+  } else {
+    renderQuestion();
+    document.getElementById('quiz-card').scrollIntoView({behavior:'smooth', block:'start'});
+  }
+}
+
+function showResult() {
+  const pct = Math.round((score / total) * 100);
+  document.getElementById('score-num').textContent = pct;
+  document.getElementById('score-denom').textContent = `/ 100点`;
+  document.getElementById('prog-fill').style.width = '100%';
+
+  let hyouka, sub;
+  if (pct === 100) { hyouka = '満点合格おめでとう！！🎊'; sub = '完璧です！素晴らしい！'; }
+  else if (pct >= 80) { hyouka = 'おしい！あと少しで満点！'; sub = `正解数: ${score} / ${total}`; }
+  else if (pct >= 60) { hyouka = '合格おめでとう！！'; sub = `正解数: ${score} / ${total}`; }
+  else if (pct >= 50) { hyouka = '惜しい！もう少しで合格！'; sub = 'もう一回チャレンジしてね！'; }
+  else if (pct <= 10) { hyouka = '本当に勉強してる!？😅'; sub = '頑張れ！'; }
+  else { hyouka = '勉強してからもう一度！'; sub = `正解数: ${score} / ${total}`; }
+
+  document.getElementById('hyouka-text').textContent = hyouka;
+  document.getElementById('hyouka-sub').textContent = sub;
+  showScreen('result-screen');
+}
+
+function restart() {
+  document.getElementById('count-input').value = '';
+  showScreen('count-screen');
+  document.getElementById('count-input').focus();
+}
+</script>
+</body>
+</html>
